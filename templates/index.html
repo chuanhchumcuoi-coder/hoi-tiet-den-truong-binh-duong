@@ -1,0 +1,3837 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b6ff4">
+  <title>Đường đến trường an toàn</title>
+  <link rel="icon" type="image/png" href="/static/logo-web-icon.png">
+  <link rel="apple-touch-icon" href="/static/logo-web-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <style>
+    :root {
+      --blue-900: #123b67;
+      --blue-800: #15518b;
+      --blue-700: #0b6ff4;
+      --blue-600: #2384ff;
+      --blue-100: #eaf4ff;
+      --blue-50: #f6faff;
+      --cyan: #22b7d8;
+      --orange: #f2a92f;
+      --green: #159766;
+      --yellow: #d9970d;
+      --ink: #18354f;
+      --muted: #6a7f93;
+      --line: #dce8f4;
+      --surface: #ffffff;
+      --background: #eef6ff;
+      --shadow: 0 16px 44px rgba(32, 78, 121, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(11,111,244,.13), transparent 32%),
+        linear-gradient(180deg, #f8fbff 0%, var(--background) 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+
+    button, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .app-shell {
+      width: min(1580px, calc(100% - 28px));
+      margin: 16px auto 28px;
+    }
+
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+      min-height: 112px;
+      padding: 24px 30px;
+      color: #fff;
+      border-radius: 24px;
+      background: linear-gradient(120deg, #0b5cbc 0%, #0b76f5 58%, #20b7d5 100%);
+      box-shadow: 0 18px 42px rgba(11, 94, 183, .22);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -80px;
+      top: -130px;
+      border: 42px solid rgba(255,255,255,.10);
+      border-radius: 50%;
+    }
+
+    .hero-copy { position: relative; z-index: 1; }
+    .hero-kicker {
+      margin: 0 0 6px;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .88;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.55rem, 3vw, 2.35rem);
+      line-height: 1.08;
+      letter-spacing: -.03em;
+    }
+    .hero p {
+      margin: 8px 0 0;
+      color: rgba(255,255,255,.88);
+      font-size: .96rem;
+    }
+    .hero-icon {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: 96px;
+      height: 96px;
+      padding: 7px;
+      border: 1px solid rgba(255,255,255,.42);
+      border-radius: 26px;
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 12px 28px rgba(5,54,111,.22);
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+    .hero-logo {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 19px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
+      margin-top: 18px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid rgba(203, 220, 237, .95);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .sidebar {
+      min-height: 710px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .side-head {
+      padding: 22px 22px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .side-head-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .side-head h2 {
+      margin: 0;
+      font-size: 1.13rem;
+    }
+    .count-badge {
+      padding: 7px 11px;
+      color: #0752aa;
+      background: #eef6ff;
+      border: 1px solid #bdd9fb;
+      border-radius: 999px;
+      font-size: .78rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .side-head p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.5;
+    }
+
+    .filter-box {
+      padding: 17px 22px;
+      border-bottom: 1px solid var(--line);
+    }
+    .filter-box label {
+      display: block;
+      margin-bottom: 8px;
+      color: #3d5c77;
+      font-size: .76rem;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+    .select {
+      width: 100%;
+      min-height: 50px;
+      padding: 0 14px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid #cddff1;
+      border-radius: 14px;
+      outline: none;
+    }
+    .select:focus {
+      border-color: #6eaeff;
+      box-shadow: 0 0 0 3px rgba(11,111,244,.11);
+    }
+
+    .list-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 46px;
+      padding: 11px 22px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+      font-size: .78rem;
+    }
+
+    .school-list {
+      flex: 1;
+      min-height: 0;
+      max-height: 565px;
+      overflow: auto;
+      padding: 8px 8px 14px;
+      scrollbar-width: thin;
+      scrollbar-color: #b5cce1 transparent;
+    }
+
+    .school-card {
+      width: 100%;
+      padding: 14px 14px;
+      text-align: left;
+      color: inherit;
+      border: 0;
+      border-radius: 14px;
+      background: transparent;
+      transition: background .15s ease, transform .15s ease;
+    }
+    .school-card:hover {
+      background: #f4f9ff;
+    }
+    .school-card.active {
+      background: #eaf4ff;
+      box-shadow: inset 3px 0 0 var(--blue-700);
+    }
+
+    .school-list-selected {
+      padding: 10px 8px 14px;
+    }
+    .school-back {
+      width: 100%;
+      min-height: 40px;
+      margin: 2px 0 8px;
+      padding: 0 12px;
+      text-align: left;
+      color: #0752aa;
+      background: #f4f9ff;
+      border: 1px solid #c8dff8;
+      border-radius: 12px;
+      font-size: .78rem;
+      font-weight: 850;
+    }
+    .school-back:hover {
+      background: #eaf4ff;
+    }
+    .school-name {
+      margin: 0;
+      color: #153958;
+      font-size: .92rem;
+      font-weight: 850;
+      line-height: 1.35;
+    }
+    .school-address {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: .78rem;
+      line-height: 1.5;
+    }
+    .school-meta {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 23px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #eef4f8;
+      color: #506a81;
+      font-size: .68rem;
+      font-weight: 800;
+    }
+    .tag.ok {
+      color: #0b7c50;
+      background: #e9f8f1;
+    }
+    .tag.warn {
+      color: #8a6104;
+      background: #fff4d8;
+    }
+
+    .map-panel {
+      min-width: 0;
+      min-height: 710px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .map-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.96);
+    }
+    .map-title-wrap { min-width: 0; }
+    .map-title-wrap h2 {
+      margin: 0;
+      color: #173956;
+      font-size: 1.12rem;
+      line-height: 1.3;
+    }
+    .map-title-wrap p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: .82rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+    .btn {
+      min-height: 38px;
+      padding: 0 13px;
+      border: 1px solid #c8dff8;
+      border-radius: 12px;
+      color: #0752aa;
+      background: #f7fbff;
+      font-size: .78rem;
+      font-weight: 800;
+    }
+    .btn:hover { background: #edf6ff; }
+    .btn.gps-active { color: #0b7c50; background: #e9f8f1; border-color: #a9dec9; }
+    .btn.gps-measuring {
+      color: #8a6104;
+      background: #fff8e7;
+      border-color: #f0d485;
+      animation: gpsButtonPulse 1.4s ease-in-out infinite;
+    }
+    .btn.gps-warning { color: #9b4f07; background: #fff3e7; border-color: #efc28e; }
+    .btn:disabled { cursor: wait; opacity: .72; }
+
+
+    .btn.home-toolbar {
+      color: #0b6b4b;
+      background: #f1fbf6;
+      border-color: #b9decf;
+      white-space: nowrap;
+    }
+    .btn.home-toolbar.saved {
+      color: #0b5fbd;
+      background: #eef6ff;
+      border-color: #bdd9fb;
+    }
+
+    .home-toolbar-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .home-manage-btn {
+      width: 38px;
+      min-width: 38px;
+      padding: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .home-manage-btn.show { display: inline-flex; }
+    .home-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      z-index: 1800;
+      width: min(310px, 78vw);
+      padding: 9px;
+      background: #fff;
+      border: 1px solid #d8e6f5;
+      border-radius: 13px;
+      box-shadow: 0 14px 36px rgba(29,62,92,.20);
+    }
+    .home-menu[hidden] { display: none !important; }
+    .home-menu-status {
+      padding: 7px 8px 10px;
+      color: #60788e;
+      font-size: 11.5px;
+      line-height: 1.45;
+      border-bottom: 1px solid #edf2f7;
+      margin-bottom: 6px;
+    }
+    .home-menu button {
+      width: 100%;
+      min-height: 38px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: #244d70;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .home-menu button:hover { background: #f3f8fd; }
+    .home-menu button.danger { color: #a53e49; }
+    .home-menu button:disabled { opacity: .45; cursor: not-allowed; }
+
+    .route-journey-summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      margin-top: 12px;
+      padding: 9px 12px;
+      border: 1px solid #d7e6f8;
+      border-radius: 11px;
+      background: #f8fbff;
+      color: #285578;
+      font-size: 12.5px;
+      font-weight: 800;
+    }
+    .route-journey-summary .journey-arrow {
+      color: #0b6ff4;
+      font-weight: 900;
+    }
+
+    .leaflet-control-current-location {
+      margin-right: 14px !important;
+      margin-bottom: 34px !important;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+    .current-location-btn {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 1px solid rgba(38,75,110,.16);
+      border-radius: 50%;
+      background: rgba(255,255,255,.97);
+      box-shadow: 0 4px 14px rgba(31,66,99,.22);
+      cursor: pointer;
+    }
+    .current-location-btn:hover { background: #f7fbff; }
+    .current-location-icon {
+      position: relative;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #4285f4;
+      border-radius: 50%;
+    }
+    .current-location-icon::before {
+      content: "";
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #4285f4;
+    }
+    .current-location-icon::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border: 1px solid rgba(66,133,244,.25);
+      border-radius: 50%;
+    }
+
+    @keyframes gpsButtonPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(237, 172, 34, 0); }
+      50% { box-shadow: 0 0 0 5px rgba(237, 172, 34, .16); }
+    }
+
+    .gps-status {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 54px;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fbff;
+      color: #385c7b;
+    }
+    .gps-status[hidden] { display: none; }
+    .gps-status-icon {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background: #eaf4ff;
+      font-size: 1rem;
+    }
+    .gps-status-copy { min-width: 0; flex: 1; }
+    .gps-status-title {
+      margin: 0;
+      color: #173956;
+      font-size: .79rem;
+      font-weight: 850;
+    }
+    .gps-status-detail {
+      margin: 3px 0 0;
+      color: #667f95;
+      font-size: .72rem;
+      line-height: 1.35;
+    }
+    .gps-status-chip {
+      flex: 0 0 auto;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #eaf4ff;
+      color: #0b5fbd;
+      font-size: .68rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .gps-status.measuring { background: #fffaf0; }
+    .gps-status.measuring .gps-status-icon,
+    .gps-status.measuring .gps-status-chip { background: #fff0c8; color: #8a6104; }
+    .gps-status.success { background: #f1fbf6; }
+    .gps-status.success .gps-status-icon,
+    .gps-status.success .gps-status-chip { background: #dff5e9; color: #0b7c50; }
+    .gps-status.warning { background: #fff7ef; }
+    .gps-status.warning .gps-status-icon,
+    .gps-status.warning .gps-status-chip { background: #ffe9d2; color: #9b4f07; }
+    .gps-status.error { background: #fff2f2; }
+    .gps-status.error .gps-status-icon,
+    .gps-status.error .gps-status-chip { background: #ffe0e0; color: #b03a3a; }
+
+    .map-note {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 42px;
+      padding: 9px 18px;
+      color: #45637f;
+      background: #f6faff;
+      border-bottom: 1px solid var(--line);
+      font-size: .77rem;
+    }
+    .map-note strong { color: #0b5fbd; }
+
+    #map {
+      flex: 1;
+      min-height: 615px;
+      background: #eef4f8;
+    }
+
+    .district-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 7px;
+      color: #204c73;
+      background: rgba(255,255,255,.86);
+      border: 1px solid rgba(60,108,153,.22);
+      border-radius: 8px;
+      box-shadow: 0 2px 7px rgba(34,73,108,.09);
+      font-size: 10px;
+      font-weight: 850;
+      white-space: nowrap;
+      pointer-events: none;
+      backdrop-filter: blur(3px);
+    }
+
+    .school-dot {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      color: #fff;
+      background: #f0a72f;
+      box-shadow: 0 4px 10px rgba(45,72,96,.24);
+      font-size: 11px;
+      transition: transform .12s ease;
+    }
+    .school-dot.selected {
+      width: 28px;
+      height: 28px;
+      background: #0b73e6;
+      box-shadow: 0 0 0 4px rgba(11,115,230,.15), 0 5px 14px rgba(35,76,116,.26);
+      font-size: 13px;
+    }
+
+    .student-dot {
+      position: relative;
+      width: 14px;
+      height: 14px;
+      display: block;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      background: #4285f4;
+      box-shadow: 0 0 0 4px rgba(66,133,244,.20), 0 2px 6px rgba(0,0,0,.20);
+    }
+    .student-dot::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border: 2px solid rgba(66,133,244,.25);
+      border-radius: 50%;
+      animation: gpsPulse 1.7s ease-out infinite;
+    }
+    @keyframes gpsPulse {
+      0% { transform: scale(.72); opacity: .85; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+
+    .leaflet-div-icon { background: transparent; border: 0; }
+    .leaflet-container { font-family: inherit; }
+    .leaflet-popup-content-wrapper {
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(29,62,92,.18);
+    }
+    .popup-name {
+      margin: 0 0 6px;
+      color: #153b5d;
+      font-weight: 850;
+      font-size: .9rem;
+    }
+    .popup-address {
+      margin: 0;
+      color: #667d91;
+      line-height: 1.45;
+      font-size: .77rem;
+    }
+
+    .loading, .empty, .error {
+      padding: 26px 18px;
+      color: var(--muted);
+      
+      font-size: .84rem;
+      line-height: 1.55;
+    }
+    .error { color: #a53e49; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      z-index: 9999;
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 10px 14px;
+      color: #fff;
+      background: rgba(24,53,79,.95);
+      border-radius: 12px;
+      box-shadow: 0 12px 30px rgba(21,52,80,.25);
+      font-size: .82rem;
+      transition: .18s ease;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    .weather-panel {
+      margin-top: 18px;
+      overflow: hidden;
+    }
+
+    /* Layout 05: tinh gon khu thoi tiet */
+    #weatherSubtitle,
+    #weatherStatus,
+    #weatherSourceNote {
+      display: none !important;
+    }
+    .weather-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, #ffffff 0%, #f3f9ff 100%);
+    }
+    .weather-head-copy { min-width: 0; }
+    .weather-kicker {
+      margin: 0 0 4px;
+      color: #0b6ff4;
+      font-size: .72rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .weather-head h2 {
+      margin: 0;
+      color: #163d60;
+      font-size: 1.18rem;
+      line-height: 1.25;
+    }
+    .weather-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+    .weather-schedule {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, auto);
+      gap: 8px;
+      align-items: center;
+    }
+    .schedule-pill {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 11px;
+      border: 1px solid #cde1f7;
+      border-radius: 999px;
+      color: #315b80;
+      background: #fff;
+      font-size: .72rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .schedule-pill.primary {
+      color: #0755ad;
+      background: #eaf4ff;
+      border-color: #bcd9fa;
+    }
+    .schedule-pill.countdown {
+      color: #087857;
+      background: #effaf5;
+      border-color: #c7eadc;
+      font-variant-numeric: tabular-nums;
+    }
+    .weather-status {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 22px;
+      color: #496780;
+      background: #f8fbff;
+      border-bottom: 1px solid var(--line);
+      font-size: .77rem;
+      line-height: 1.4;
+    }
+    .weather-status.loading { color: #835b05; background: #fffaf0; }
+    .weather-status.success { color: #087453; background: #f1fbf6; }
+    .weather-status.error { color: #a53e49; background: #fff3f3; }
+    .weather-empty {
+      min-height: 170px;
+      display: grid;
+      place-items: center;
+      padding: 28px 22px;
+      
+      color: #627b91;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(11,111,244,.08), transparent 48%),
+        #fff;
+    }
+    .weather-empty[hidden] { display: none; }
+    .weather-empty-icon { font-size: 2rem; margin-bottom: 8px; }
+    .weather-empty strong { display: block; color: #244d70; margin-bottom: 5px; }
+    .weather-empty p { margin: 0; font-size: .82rem; line-height: 1.55; }
+    .weather-content[hidden] { display: none; }
+    .weather-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      padding: 18px;
+      background: #f7fbff;
+    }
+    .weather-grid.single {
+      grid-template-columns: minmax(0, 860px);
+      justify-content: center;
+    }
+    .weather-grid.single .weather-card {
+      width: 100%;
+      justify-self: center;
+    }
+    .weather-card[hidden] { display: none !important; }
+    .weather-card {
+      min-width: 0;
+      border: 1px solid #d7e6f5;
+      border-radius: 19px;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(43, 83, 119, .08);
+      overflow: hidden;
+    }
+    .weather-card.student { border-top: 4px solid #e84c4c; }
+    .weather-card.school { border-top: 4px solid #0b73e6; }
+    .weather-card.error-card { border-top-color: #d26d78; }
+    .weather-card.loading-card { border-top-color: #f0a72f; }
+    .weather-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 17px 11px;
+    }
+    .weather-location-label {
+      margin: 0 0 4px;
+      color: #678096;
+      font-size: .69rem;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .weather-location-name {
+      margin: 0;
+      color: #173e60;
+      font-size: 1rem;
+      font-weight: 900;
+      line-height: 1.3;
+    }
+    .weather-location-address {
+      margin: 5px 0 0;
+      color: #748a9d;
+      font-size: .72rem;
+      line-height: 1.4;
+    }
+    .weather-live-chip {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 8px;
+      color: #0a7555;
+      background: #eefaf5;
+      border: 1px solid #c6eadb;
+      border-radius: 999px;
+      font-size: .65rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .weather-live-chip::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #19a873;
+      box-shadow: 0 0 0 4px rgba(25,168,115,.12);
+    }
+    .weather-live-chip.fallback {
+      color: #7a5800;
+      background: #fff8e8;
+      border-color: #f1d998;
+    }
+    .weather-live-chip.fallback::before {
+      background: #e5a51d;
+      box-shadow: 0 0 0 4px rgba(229,165,29,.13);
+    }
+    .weather-live-chip.stale {
+      color: #8a4b12;
+      background: #fff4eb;
+      border-color: #f0c8a8;
+    }
+    .weather-live-chip.stale::before {
+      background: #d9771f;
+      box-shadow: 0 0 0 4px rgba(217,119,31,.13);
+    }
+    .weather-main {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 2px 17px 14px;
+    }
+    .weather-main-icon {
+      width: 70px;
+      height: 70px;
+      flex: 0 0 70px;
+      display: grid;
+      place-items: center;
+      border-radius: 20px;
+      background: linear-gradient(145deg, #edf7ff, #fff);
+      border: 1px solid #d9eaf8;
+      font-size: 2.55rem;
+    }
+    .weather-temperature {
+      margin: 0;
+      color: #113a5f;
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      font-weight: 900;
+      line-height: .95;
+      letter-spacing: -.05em;
+    }
+    .weather-condition {
+      margin: 7px 0 0;
+      color: #456781;
+      font-size: .86rem;
+      font-weight: 800;
+    }
+    .weather-metrics {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      padding: 0 17px 15px;
+    }
+    .weather-metric {
+      min-width: 0;
+      padding: 9px 8px;
+      border: 1px solid #e0ebf5;
+      border-radius: 12px;
+      background: #f9fcff;
+      
+    }
+    .weather-metric span {
+      display: block;
+      color: #71889b;
+      font-size: .64rem;
+      line-height: 1.25;
+    }
+    .weather-metric strong {
+      display: block;
+      margin-top: 4px;
+      color: #234b6c;
+      font-size: .8rem;
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .forecast-box {
+      padding: 13px 17px 15px;
+      border-top: 1px solid #e6eef6;
+      background: #fbfdff;
+    }
+    .forecast-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+    .forecast-title strong {
+      color: #315875;
+      font-size: .75rem;
+    }
+    .forecast-title span {
+      color: #7b90a2;
+      font-size: .65rem;
+    }
+    .forecast-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .forecast-item {
+      display: grid;
+      grid-template-columns: auto auto 1fr;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      padding: 9px 10px;
+      border: 1px solid #dfeaf4;
+      border-radius: 12px;
+      background: #fff;
+    }
+    .forecast-time {
+      color: #42627c;
+      font-size: .72rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .forecast-icon { font-size: 1.35rem; }
+    .forecast-values { min-width: 0; text-align: right; }
+    .forecast-values strong { display: block; color: #204b6f; font-size: .8rem; }
+    .forecast-values span {
+      display: block;
+      margin-top: 2px;
+      color: #668096;
+      font-size: .64rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .weather-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 17px 12px;
+      color: #71879a;
+      border-top: 1px solid #edf2f7;
+      font-size: .65rem;
+      line-height: 1.35;
+    }
+    .weather-error-body,
+    .weather-loading-body {
+      padding: 22px 17px 26px;
+      
+      font-size: .8rem;
+      line-height: 1.55;
+    }
+    .weather-error-body { color: #9b4550; }
+    .weather-loading-body { color: #8a6104; }
+    .weather-retry {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 12px;
+      padding: 8px 13px;
+      border: 1px solid #df9ca4;
+      border-radius: 10px;
+      color: #8d3440;
+      background: #fff;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .weather-retry:hover { background: #fff7f8; }
+    .weather-source-note {
+      padding: 11px 18px 14px;
+      color: #71879a;
+      background: #fff;
+      border-top: 1px solid var(--line);
+      font-size: .69rem;
+      line-height: 1.5;
+    }
+    .weather-source-note strong { color: #365c7b; }
+
+    @media (max-width: 1120px) {
+      .weather-head { align-items: flex-start; }
+      .weather-schedule { grid-template-columns: 1fr; }
+      .schedule-pill { justify-content: flex-start; }
+      .weather-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 980px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .sidebar { min-height: 0; }
+      .school-list { max-height: 360px; }
+      #map { min-height: 560px; }
+    }
+
+    @media (max-width: 640px) {
+      .app-shell { width: min(100% - 14px, 1580px); margin-top: 7px; }
+      .hero { min-height: 96px; padding: 20px; border-radius: 18px; }
+      .hero-icon { width: 66px; height: 66px; padding: 5px; border-radius: 19px; }
+      .hero-logo { border-radius: 14px; }
+      .hero p { display: none; }
+      .panel { border-radius: 18px; }
+      .map-toolbar { align-items: flex-start; flex-direction: column; }
+      .toolbar-actions { width: 100%; }
+      .toolbar-actions .btn { flex: 1; }
+      .map-note { align-items: flex-start; }
+      .gps-status { align-items: flex-start; flex-wrap: wrap; }
+      .gps-status-chip { margin-left: 45px; }
+      #map { min-height: 500px; }
+      .district-label { font-size: 9px; padding: 2px 5px; }
+      .weather-head { flex-direction: column; }
+      .weather-schedule { width: 100%; grid-template-columns: 1fr; }
+      .weather-grid { grid-template-columns: 1fr; padding: 10px; }
+      .weather-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .forecast-row { grid-template-columns: 1fr; }
+      .weather-card-footer { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 820px) {
+      .weather-grid { grid-template-columns: 1fr; }
+    }
+
+    /* V8: Duong den truong */
+    .route-panel { margin-top: 16px; padding: 20px 22px; }
+    .route-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .route-heading h2 { font-size:20px; margin:0 0 5px; color:#173b59; }
+    .route-heading p { margin:0; color:#647b91; font-size:13px; }
+    .route-controls { display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+    .route-controls select { padding:10px 12px; border:1px solid #cbd9e8; border-radius:10px; background:white; }
+    .route-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:15px; }
+    .route-metric { background:#f1f7ff; border:1px solid #d7e6f8; padding:15px; border-radius:13px; }
+    .route-metric strong { display:block; color:#194d82; font-size:24px; margin-top:5px; }
+    .route-metric span { color:#5c7489; font-size:12px; }
+    .route-status { margin-top:13px; padding:12px 14px; background:#f7f9fc; border-radius:10px; color:#47627b; font-size:13px; }
+    .route-status.error { background:#fff2f2; color:#a83838; }
+    .route-note { font-size:12px; color:#72869a; margin:12px 0 0; }
+
+    .home-route-bar {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid #d8e6f5;
+      border-radius: 13px;
+      background: #f8fbff;
+    }
+    .home-route-info { min-width: 0; }
+    .home-route-info strong {
+      display: block;
+      color: #173b59;
+      font-size: .86rem;
+      margin-bottom: 3px;
+    }
+    .home-route-info span {
+      display: block;
+      color: #6b8297;
+      font-size: .72rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .home-route-actions, .journey-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .journey-controls label {
+      color: #5c7489;
+      font-size: .76rem;
+      font-weight: 750;
+    }
+    .journey-controls select {
+      min-height: 38px;
+      padding: 0 10px;
+      border: 1px solid #cbd9e8;
+      border-radius: 10px;
+      background: #fff;
+      color: #173b59;
+      font-size: .78rem;
+    }
+    .btn.home-save { color:#0b6b4b; border-color:#b9decf; background:#f1fbf6; }
+    .btn.home-delete { color:#a53e49; border-color:#efcaca; background:#fff7f7; }
+    .home-dot {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      background: #10a36f;
+      box-shadow: 0 0 0 4px rgba(16,163,111,.18), 0 4px 12px rgba(35,76,116,.24);
+      font-size: 14px;
+    }
+    @media(max-width:900px) {
+      .home-route-bar { grid-template-columns: 1fr; }
+      .home-route-actions, .journey-controls { width:100%; }
+      .journey-controls select { flex:1; min-width:220px; }
+    }
+
+    .safety-panel { margin-top:16px; padding:20px 22px; }
+    .safety-head h2 { margin:0 0 5px; font-size:20px; color:#173b59; }
+    .safety-head p { margin:0; color:#647b91; font-size:13px; line-height:1.55; }
+    .safety-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:15px; }
+    .safety-box { border:1px solid #d8e5f2; border-radius:14px; padding:16px; background:#f8fbff; }
+    .safety-box h3 { margin:0 0 10px; font-size:15px; color:#244d70; }
+    .safety-summary { font-weight:700; line-height:1.45; margin-bottom:10px; }
+    .safety-summary.good { color:#087453; }
+    .safety-summary.watch { color:#9b6500; }
+    .safety-summary.danger { color:#a53e49; }
+    .safety-list { margin:0; padding-left:20px; color:#435f78; font-size:13px; line-height:1.65; }
+    .safety-list li + li { margin-top:4px; }
+    .weather-brief-list { display:grid; gap:8px; margin:0 0 12px; }
+    .weather-brief-item { padding:9px 10px; border:1px solid #deebf7; border-radius:11px; background:#fff; color:#385a74; font-size:12.5px; line-height:1.5; }
+    .weather-brief-item strong { color:#173b59; }
+    .weather-brief-item .brief-metrics { color:#61798e; }
+    .safety-empty { color:#72869a; font-size:13px; line-height:1.55; }
+    .safety-note { margin:12px 0 0; font-size:11.5px; color:#75899c; line-height:1.55; }
+    @media(max-width:700px) { .safety-grid { grid-template-columns:1fr; } }
+    @media(max-width:700px) { .route-metrics { grid-template-columns:1fr; } .route-heading { align-items:stretch; } }
+
+    /* Layout 01: tinh gon theo danh dau cua nguoi dung */
+    .list-status,
+    .map-title-wrap p,
+    .map-note,
+    .gps-status { display: none !important; }
+
+    .leaflet-control.map-lock-control {
+      margin-top: 8px;
+      border: 0;
+      box-shadow: 0 1px 5px rgba(0,0,0,.25);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .map-lock-control button {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      padding: 0;
+      background: #fff;
+      color: #173956;
+      font-size: 17px;
+      line-height: 34px;
+      cursor: pointer;
+    }
+    .map-lock-control button:hover { background: #f2f7fb; }
+    #map.map-locked .leaflet-control-zoom a {
+      pointer-events: none;
+      opacity: .48;
+    }
+
+
+
+    /* V13 - Khu cài WebApp & Donate */
+    .support-install-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .support-card {
+      min-height: 250px;
+      padding: 22px 24px;
+      border-radius: 22px;
+      border: 1px solid rgba(203, 220, 237, .95);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+    .support-card h2 {
+      margin: 0;
+      color: #153e69;
+      font-size: 1.18rem;
+      line-height: 1.25;
+    }
+    .support-card .support-subtitle {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: .88rem;
+      line-height: 1.5;
+    }
+    .install-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fcff 100%);
+    }
+    .install-actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .install-action {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      width: 100%;
+      padding: 0 18px;
+      border-radius: 16px;
+      background: #fff;
+      font-weight: 900;
+      font-size: .94rem;
+      color: #173b63;
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .install-action:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(26,74,119,.10); }
+    .install-action.android { border: 1px solid #b7e9d0; background: linear-gradient(90deg, #f0fff6, #ffffff); }
+    .install-action.ios { border: 1px solid #bdd9fb; background: linear-gradient(90deg, #f4f9ff, #ffffff); }
+    .install-action .install-label { display: flex; align-items: center; gap: 10px; text-align: left; }
+    .install-action .install-icon { font-size: 1.45rem; }
+    .install-action .install-arrow { font-size: 1.25rem; color: #0b6ff4; }
+
+    /* V14.2 - PWA: huong dan truc quan, uu tien cai truc tiep tren Android. */
+    .install-modal[hidden] { display: none; }
+    .install-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(12, 34, 55, .55);
+      backdrop-filter: blur(5px);
+    }
+    .install-modal-card {
+      width: min(590px, 100%);
+      max-height: min(90dvh, 700px);
+      overflow-y: auto;
+      padding: 23px;
+      border-radius: 22px;
+      background: #fff;
+      border: 1px solid #d9e7f5;
+      box-shadow: 0 24px 70px rgba(18,59,103,.24);
+    }
+    .install-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .install-modal-head h3 { margin: 0; color: #173b63; font-size: 1.12rem; line-height: 1.3; }
+    .install-modal-close { width: 40px; height: 40px; flex: 0 0 40px; border: 1px solid #d9e7f5; border-radius: 12px; background: #fff; color: #45657f; font-weight: 900; font-size: 1.15rem; }
+    .install-modal-close:hover { background: #edf6ff; }
+    .install-guide-lead { margin: 10px 0 0; font-size: .88rem; color: #53718c; line-height: 1.5; }
+    .install-visual-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+    .install-step-card { position: relative; padding: 16px 11px 14px; border: 1px solid #d8e7fa; border-radius: 17px; background: linear-gradient(180deg, #f5faff 0%, #fff 100%); text-align: center; }
+    .install-step-num { position: absolute; top: 9px; left: 9px; display: grid; place-items: center; width: 25px; height: 25px; background: #0b6ff4; color: #fff; font-size: .78rem; font-weight: 900; border-radius: 50%; }
+    .install-step-art { display: grid; place-items: center; margin: 16px auto 10px; width: 60px; height: 60px; border-radius: 18px; background: #e8f2ff; color: #075fca; font-size: 2rem; font-weight: 900; }
+    .install-step-art svg { width: 35px; height: 35px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .install-step-art .install-app-logo { width: 54px; height: 54px; object-fit: contain; border-radius: 14px; }
+    .install-step-card h4 { margin: 0; color: #123b67; font-size: .88rem; line-height: 1.3; }
+    .install-step-card p { margin: 7px 0 0; color: #56718a; font-size: .77rem; line-height: 1.4; }
+    .install-guide-tip { margin: 15px 0 0; padding: 12px 14px; border-radius: 13px; border: 1px solid #cde4ff; background: #f1f8ff; color: #285777; font-size: .84rem; line-height: 1.55; }
+    .install-guide-tip.warn { border-color: #f4dfb5; background: #fffbf1; color: #805c17; }
+    .install-guide-tip strong { color: inherit; }
+    .install-action:disabled { opacity: .74; cursor: default; }
+    @media (max-width: 540px) {
+      .install-modal-card { padding: 18px 15px; }
+      .install-modal-head h3 { font-size: 1rem; }
+      .install-visual-steps { gap: 6px; }
+      .install-step-card { padding: 13px 6px 12px; }
+      .install-step-art { width: 46px; height: 46px; border-radius: 13px; font-size: 1.6rem; }
+      .install-step-art svg { width: 28px; height: 28px; }
+      .install-step-art .install-app-logo { width: 42px; height: 42px; border-radius: 10px; }
+      .install-step-card h4 { font-size: .76rem; }
+      .install-step-card p { font-size: .7rem; }
+      .install-step-num { width: 20px; height: 20px; font-size: .7rem; top: 5px; left: 5px; }
+    }
+
+    @media (max-width: 860px) {
+      .support-install-grid { grid-template-columns: 1fr; }
+      .donate-wrap { grid-template-columns: 150px minmax(0, 1fr); }
+    }
+    @media (max-width: 540px) {
+      .support-card { padding: 18px; }
+      .donate-wrap { grid-template-columns: 1fr; }
+      .donate-qr-box { width: min(220px, 100%); margin: 0 auto; }
+      .donate-copy { text-align: center; justify-items: center; }
+      .donate-line { text-align: left; width: 100%; }
+      .install-action { min-height: 56px; font-size: .88rem; }
+    }
+
+
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="hero-kicker">🌦️ ĐƯỜNG ĐẾN TRƯỜNG AN TOÀN</p>
+        <h1>Bản đồ thời tiết và hỗ trợ hành trình đến trường</h1>
+        <p>📍 Định vị • 🌤️ Thời tiết • 🛣️ Tuyến đường • ⚠️ Cảnh báo • 🎒 Lời khuyên</p>
+      </div>
+      <div class="hero-icon">
+        <img class="hero-logo" src="/static/logo-web-icon.png" alt="Logo Đường đến trường an toàn">
+      </div>
+    </header>
+
+    <section class="main-grid">
+      <aside class="panel sidebar">
+        <div class="side-head">
+          <div class="side-head-row">
+            <h2>Chọn trường học</h2>
+            <span class="count-badge" id="totalCount">30 trường</span>
+          </div>
+          <p>Phạm vi Bình Dương trước sáp nhập năm 2025.</p>
+        </div>
+
+        <div class="filter-box">
+          <label for="districtSelect">KHU VỰC</label>
+          <select class="select" id="districtSelect">
+            <option value="">Tất cả khu vực</option>
+          </select>
+        </div>
+
+        <div class="list-status">
+          <span id="visibleCount">Đang tải…</span>
+          <span>API: hoạt động</span>
+        </div>
+
+        <div class="school-list" id="schoolList">
+          <div class="loading">Đang tải danh sách trường…</div>
+        </div>
+      </aside>
+
+      <section class="panel map-panel">
+        <div class="map-toolbar">
+          <div class="map-title-wrap">
+            <h2 id="mapTitle">Bản đồ riêng Bình Dương trước sáp nhập 2025</h2>
+            <p id="mapSubtitle">Ranh giới tỉnh và 9 khu vực cấp huyện trước sáp nhập 2025.</p>
+          </div>
+          <div class="toolbar-actions">
+            <div class="home-toolbar-wrap" id="homeToolbarWrap">
+              <button class="btn home-toolbar" id="homeButton" type="button" title="Lưu hoặc mở vị trí nhà riêng">🏠 Đặt nhà riêng</button>
+              <button class="btn home-manage-btn" id="homeManageButton" type="button" title="Quản lý vị trí nhà riêng" aria-label="Quản lý vị trí nhà riêng">⋮</button>
+              <div class="home-menu" id="homeMenu" hidden>
+                <div class="home-menu-status" id="homeMenuStatus">Chưa có vị trí nhà riêng.</div>
+                <button type="button" id="homeFocusMenuButton">🏠 Xem vị trí nhà riêng</button>
+                <button type="button" id="homeUpdateMenuButton">♻️ Cập nhật bằng GPS hiện tại</button>
+                <button type="button" class="danger" id="homeDeleteMenuButton">🗑 Xóa vị trí nhà riêng</button>
+              </div>
+            </div>
+            <button class="btn" id="locateStudentButton" type="button" hidden>📍 Định vị học sinh</button>
+            <button class="btn" id="viewAllButton" type="button">◉ Xem toàn bộ</button>
+            <button class="btn" id="reloadButton" type="button">↻ Tải lại</button>
+          </div>
+        </div>
+
+        <div class="map-note">
+          <span aria-hidden="true">📌</span>
+          <span><strong>Chỉ Bình Dương cũ:</strong> phần ngoài ranh giới tỉnh được che, bản đồ không còn trải sang TP.HCM, Tây Ninh hay Đồng Nai.</span>
+        </div>
+
+        <div class="gps-status" id="gpsStatus" hidden aria-live="polite">
+          <div class="gps-status-icon" id="gpsStatusIcon" aria-hidden="true">🎯</div>
+          <div class="gps-status-copy">
+            <p class="gps-status-title" id="gpsStatusTitle">Định vị chính xác cao</p>
+            <p class="gps-status-detail" id="gpsStatusDetail">Mục tiêu sai số do thiết bị báo về không quá 1 m.</p>
+          </div>
+          <span class="gps-status-chip" id="gpsStatusChip">Mục tiêu ≤ 1 m</span>
+        </div>
+
+        <div id="map" role="application" aria-label="Bản đồ riêng tỉnh Bình Dương trước sáp nhập năm 2025"></div>
+      </section>
+    </section>
+
+
+    <section class="panel route-panel" id="routePanel" aria-labelledby="routeTitle">
+      <div class="route-heading">
+        <div><h2 id="routeTitle">🛣️ Đường đến trường</h2></div>
+        <div class="route-controls">
+          <label for="routeDirection">Hành trình</label>
+          <select id="routeDirection">
+            <option value="current_to_school">📍 Hiện tại → 🏫 Trường</option>
+            <option value="home_to_school" disabled>🏠 Nhà riêng → 🏫 Trường</option>
+            <option value="school_to_home" disabled>🏫 Trường → 🏠 Nhà riêng</option>
+          </select>
+          <label for="routeMode">Phương tiện</label>
+          <select id="routeMode"><option value="motorbike">Xe máy</option><option value="car">Ô tô</option><option value="bicycle">Xe đạp</option><option value="walk">Đi bộ</option></select>
+          <button class="btn" type="button" id="routeRetry">↻ Tính lại đường</button>
+        </div>
+      </div>
+      <div id="routeStatus" class="route-status" aria-live="polite" hidden>Chọn trường để tự tính đường khi đã lưu Nhà riêng.</div>
+      <div class="route-journey-summary" id="routeJourneySummary">📍 Vị trí hiện tại <span class="journey-arrow">→</span> 🏫 Chưa chọn trường</div>
+      <div id="routeMetrics" class="route-metrics" hidden>
+        <div class="route-metric"><span>📏 Quãng đường bộ dự kiến khoảng</span><strong id="routeDistance">—</strong></div>
+        <div class="route-metric"><span>⏱️ Thời gian dự kiến</span><strong id="routeDuration">—</strong></div>
+        <div class="route-metric"><span>🏫 Điểm đến</span><strong id="routeDestination" style="font-size:16px">—</strong></div>
+      </div>
+      <p class="route-note" id="routeNote">Ước tính theo mạng đường, chưa bao gồm kẹt xe, mưa ngập hoặc điều kiện giao thông trực tiếp. Tọa độ trường cần được kiểm tra trước khi sử dụng thực tế.</p>
+    </section>
+
+    <section class="panel weather-panel" id="weatherPanel" aria-labelledby="weatherTitle">
+      <div class="weather-head">
+        <div class="weather-head-copy">
+          <p class="weather-kicker">Thời tiết theo vị trí</p>
+          <h2 id="weatherTitle">Chọn một điểm là xem được ngay</h2>
+          <p id="weatherSubtitle">Chọn trường để xem thời tiết tại trường; bấm định vị để xem thời tiết tại vị trí học sinh. Chọn đủ hai điểm để so sánh.</p>
+        </div>
+        <div class="weather-schedule" aria-label="Lịch cập nhật thời tiết">
+          <span class="schedule-pill primary" id="weatherUpdateSlot">Mốc gần nhất: --:--</span>
+          <span class="schedule-pill" id="weatherNextUpdate">Tiếp theo: --:--</span>
+          <span class="schedule-pill countdown" id="weatherCountdown">Còn --:--</span>
+        </div>
+      </div>
+
+      <div class="weather-status" id="weatherStatus" aria-live="polite">
+        <span aria-hidden="true">ℹ️</span>
+        <span id="weatherStatusText">Chọn một trường hoặc định vị học sinh để xem thời tiết ngay.</span>
+      </div>
+
+      <div class="weather-empty" id="weatherEmpty">
+        <div>
+          <div class="weather-empty-icon" aria-hidden="true">🌦️</div>
+          <strong>Chưa chọn vị trí</strong>
+          <p id="weatherEmptyText">Chọn một trường hoặc bấm “Định vị học sinh”.</p>
+        </div>
+      </div>
+
+      <div class="weather-content" id="weatherContent" hidden>
+        <div class="weather-grid" id="weatherGrid">
+          <article class="weather-card student" id="studentWeatherCard"></article>
+          <article class="weather-card school" id="schoolWeatherCard"></article>
+        </div>
+        <div class="weather-source-note" id="weatherSourceNote">
+          <strong>Nguồn:</strong> Open-Meteo theo tọa độ GPS. Đây là dữ liệu mô hình, không phải phép đo ngay tại chỗ; ứng dụng kiểm tra 5 phút/lần nhưng mô hình có thể cập nhật chậm hơn.
+        </div>
+      </div>
+    </section>
+
+
+    <section class="panel safety-panel" id="safetyPanel" aria-labelledby="safetyTitle">
+      <div class="safety-head">
+        <h2 id="safetyTitle">🌦️ Thời tiết, cảnh báo & 🎒 lời khuyên đến trường</h2>
+      </div>
+      <div class="safety-grid">
+        <article class="safety-box">
+          <h3>🌦️ Thời tiết & Cảnh báo</h3>
+          <div id="warningContent" class="safety-empty">Chọn trường hoặc định vị học sinh để hệ thống đánh giá điều kiện thời tiết.</div>
+        </article>
+        <article class="safety-box">
+          <h3>🎒 Lời khuyên cho chuyến đi</h3>
+          <div id="adviceContent" class="safety-empty">Lời khuyên sẽ xuất hiện khi có dữ liệu thời tiết; có thêm tuyến đường thì tư vấn sẽ đầy đủ hơn.</div>
+        </article>
+      </div>
+      <p class="safety-note">Các mức cảnh báo tự tính của WebApp chỉ dựa trên dữ liệu mô hình; <strong>ưu tiên bản tin chính thức</strong> của <a href="https://kttv.gov.vn/kttvsite/vi-VN/1/thoi-tiet-nguy-hiem-5-15.html" target="_blank" rel="noopener noreferrer">Khí tượng Thủy văn Quốc gia ↗</a> cùng thông báo của cơ quan chức năng và nhà trường.</p>
+    </section>
+
+
+    <section class="support-install-grid" aria-label="Cài đặt WebApp">
+      <article class="support-card install-card">
+        <h2>📲 Đưa Đường đến trường an toàn ra màn hình chính</h2>
+        <p class="support-subtitle">Android: ưu tiên cài ngay khi Chrome hỗ trợ. iPhone: hướng dẫn Safari 3 bước.</p>
+        <div class="install-actions">
+          <button class="install-action android" id="androidInstallButton" type="button">
+            <span class="install-label"><span class="install-icon">🤖</span><span id="androidInstallLabel">Android · Thêm vào màn hình chính</span></span>
+            <span class="install-arrow">›</span>
+          </button>
+          <button class="install-action ios" id="iosInstallButton" type="button">
+            <span class="install-label"><span class="install-icon"></span><span>iPhone · Thêm vào màn hình chính</span></span>
+            <span class="install-arrow">›</span>
+          </button>
+        </div>
+      </article>
+    </section>
+
+  </main>
+
+
+
+  <div class="install-modal" id="installGuideModal" hidden role="dialog" aria-modal="true" aria-labelledby="installGuideTitle">
+    <div class="install-modal-card">
+      <div class="install-modal-head">
+        <h3 id="installGuideTitle">Thêm WebApp vào màn hình chính</h3>
+        <button class="install-modal-close" id="installGuideClose" type="button" aria-label="Đóng">✕</button>
+      </div>
+      <div id="installGuideSteps"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    'use strict';
+
+    // V14.2: Chrome Android co the hien hop thoai cai PWA qua beforeinstallprompt.
+    // iOS Safari KHONG ho tro goi hop thoai nay: cung cap huong dan bang hinh 3 buoc.
+    let deferredInstallPrompt = null;
+    let installBusy = false;
+    let appInstalledThisSession = false;
+    let lastInstallGuideOpener = null;
+    const installGuideModal = document.getElementById('installGuideModal');
+    const installGuideTitle = document.getElementById('installGuideTitle');
+    const installGuideSteps = document.getElementById('installGuideSteps');
+    const androidInstallButton = document.getElementById('androidInstallButton');
+    const androidInstallLabel = document.getElementById('androidInstallLabel');
+    const iosInstallButton = document.getElementById('iosInstallButton');
+    const installGuideClose = document.getElementById('installGuideClose');
+    const installedAsApp = () => appInstalledThisSession || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isInAppBrowser = /Zalo|FBAN|FBAV|Instagram|Line\//i.test(navigator.userAgent);
+
+    const shareIconSvg = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 25V4m0 0-7 7m7-7 7 7"/><path d="M12 15H8a3 3 0 0 0-3 3v15a3 3 0 0 0 3 3h24a3 3 0 0 0 3-3V18a3 3 0 0 0-3-3h-4"/></svg>';
+    const moreIconSvg = '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="8" r="2.4" fill="currentColor" stroke="none"/><circle cx="20" cy="20" r="2.4" fill="currentColor" stroke="none"/><circle cx="20" cy="32" r="2.4" fill="currentColor" stroke="none"/></svg>';
+    const addIconSvg = '<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="8" y="8" width="24" height="24" rx="5"/><path d="M20 14v12m-6-6h12"/></svg>';
+
+    function installStep(number, art, heading, explanation) {
+      return `<div class="install-step-card"><span class="install-step-num">${number}</span><div class="install-step-art">${art}</div><h4>${heading}</h4><p>${explanation}</p></div>`;
+    }
+
+    function updateAndroidInstallLabel() {
+      if (!androidInstallLabel) return;
+      androidInstallLabel.textContent = installedAsApp()
+        ? 'Android · Đã cài vào máy'
+        : deferredInstallPrompt ? 'Android · Cài ngay' : 'Android · Thêm vào màn hình chính';
+    }
+
+    function openInstallGuide(kind) {
+      if (!installGuideModal || !installGuideSteps || !installGuideTitle) return;
+      lastInstallGuideOpener = document.activeElement;
+      const appLogo = '<img class="install-app-logo" src="/static/icon-192.png" alt="Biểu tượng Đường đến trường an toàn">';
+      if (kind === 'installed') {
+        installGuideTitle.textContent = '✅ WebApp đã được thêm';
+        installGuideSteps.innerHTML = '<p class="install-guide-tip">WebApp đã được cài vào màn hình chính. Hãy tìm biểu tượng <strong>Đường đến trường an toàn</strong> trên điện thoại và chạm vào để mở.</p>';
+      } else if (kind === 'ios') {
+        installGuideTitle.textContent = '🍎 Thêm WebApp trên iPhone';
+        installGuideSteps.innerHTML = `
+          <p class="install-guide-lead">Chỉ làm một lần. Sau đó chạm logo ngoài màn hình để mở WebApp.</p>
+          <div class="install-visual-steps">
+            ${installStep(1, '🧭', 'Mở Safari', 'Mở đường dẫn WebApp bằng Safari.')}
+            ${installStep(2, shareIconSvg, 'Nhấn Chia sẻ', 'Nhấn biểu tượng Chia sẻ trên thanh công cụ.')}
+            ${installStep(3, appLogo, 'Thêm vào màn hình chính', 'Chọn mục này, rồi nhấn “Thêm”.')}
+          </div>
+          <p class="install-guide-tip">💡 Nếu mở bằng Zalo, Messenger hoặc trình duyệt khác, hãy chọn <strong>Mở trong Safari</strong> trước. Trên một số phiên bản iOS, mục “Thêm vào Màn hình chính” nằm trong menu Chia sẻ sau khi kéo xuống.</p>`;
+      } else {
+        installGuideTitle.textContent = '🤖 Cài WebApp trên Android';
+        const openChromeTip = isInAppBrowser
+          ? 'Bạn đang có thể mở qua trình duyệt trong ứng dụng. Hãy chọn <strong>Mở bằng Chrome</strong> rồi thử lại.'
+          : 'Chrome chưa cung cấp nút cài trực tiếp vào lúc này. Bạn vẫn có thể thêm bằng menu trình duyệt.';
+        installGuideSteps.innerHTML = `
+          <p class="install-guide-lead">Khi Chrome hỗ trợ, nút Android sẽ mở thẳng hộp thoại cài đặt. Nếu chưa có, làm nhanh 3 bước:</p>
+          <div class="install-visual-steps">
+            ${installStep(1, '🌐', 'Mở Chrome', 'Mở trang WebApp bằng Chrome trên Android.')}
+            ${installStep(2, moreIconSvg, 'Nhấn dấu ⋮', 'Mở menu ở góc trên trình duyệt.')}
+            ${installStep(3, addIconSvg, 'Cài đặt / Thêm', 'Chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”.')}
+          </div>
+          <p class="install-guide-tip warn">ℹ️ ${openChromeTip} Nếu Chrome đã cài WebApp, mục cài đặt có thể không còn xuất hiện.</p>`;
+      }
+      installGuideModal.hidden = false;
+      installGuideClose?.focus();
+    }
+
+    function closeInstallGuide() {
+      if (!installGuideModal) return;
+      installGuideModal.hidden = true;
+      if (lastInstallGuideOpener && typeof lastInstallGuideOpener.focus === 'function') lastInstallGuideOpener.focus();
+    }
+
+    window.addEventListener('beforeinstallprompt', event => {
+      event.preventDefault(); // giu lai su kien de mo khi nguoi dung NHAN nut Android
+      deferredInstallPrompt = event;
+      updateAndroidInstallLabel();
+    });
+
+    window.addEventListener('appinstalled', () => {
+      appInstalledThisSession = true;
+      deferredInstallPrompt = null;
+      updateAndroidInstallLabel();
+    });
+
+    if (androidInstallButton) {
+      androidInstallButton.addEventListener('click', async () => {
+        if (installBusy) return;
+        if (installedAsApp()) {
+          openInstallGuide('installed');
+          return;
+        }
+        if (deferredInstallPrompt && typeof deferredInstallPrompt.prompt === 'function') {
+          const promptEvent = deferredInstallPrompt;
+          deferredInstallPrompt = null; // moi prompt chi duoc su dung mot lan
+          installBusy = true;
+          androidInstallButton.disabled = true;
+          try {
+            await promptEvent.prompt(); // PHAI goi tu lan bam that cua nguoi dung
+            const choice = await promptEvent.userChoice;
+            if (choice?.outcome !== 'accepted') updateAndroidInstallLabel();
+          } catch (error) {
+            console.warn('Khong mo duoc hop thoai cai PWA:', error);
+            openInstallGuide('android');
+          } finally {
+            installBusy = false;
+            androidInstallButton.disabled = false;
+            updateAndroidInstallLabel();
+          }
+        } else {
+          openInstallGuide('android');
+        }
+      });
+    }
+    if (iosInstallButton) iosInstallButton.addEventListener('click', () => {
+      if (installedAsApp() && isIos) {
+        openInstallGuide('installed');
+      } else {
+        openInstallGuide('ios');
+      }
+    });
+    if (installGuideClose) installGuideClose.addEventListener('click', closeInstallGuide);
+    if (installGuideModal) installGuideModal.addEventListener('click', event => {
+      if (event.target === installGuideModal) closeInstallGuide();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && installGuideModal && !installGuideModal.hidden) closeInstallGuide();
+    });
+    updateAndroidInstallLabel();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(error => console.warn('Service Worker:', error));
+      });
+    }
+
+
+    const ARCGIS_GADM_BASE = 'https://services8.arcgis.com/PCeCk32MjqBcahrl/ArcGIS/rest/services/gadm41_VNM_shp/FeatureServer';
+    const ESRI_TILE = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+
+    const DISTRICT_NAME_BY_ID = {
+      'thu-dau-mot': 'Thủ Dầu Một',
+      'thuan-an': 'Thuận An',
+      'di-an': 'Dĩ An',
+      'tan-uyen': 'Tân Uyên',
+      'ben-cat': 'Bến Cát',
+      'bau-bang': 'Bàu Bàng',
+      'dau-tieng': 'Dầu Tiếng',
+      'phu-giao': 'Phú Giáo',
+      'bac-tan-uyen': 'Bắc Tân Uyên'
+    };
+
+    const state = {
+      allSchools: [],
+      visibleSchools: [],
+      selectedId: null,
+      schoolById: new Map(),
+      markers: new Map(),
+      provinceLayer: null,
+      provinceBounds: null,
+      districtGroup: null,
+      districtBoundsByName: new Map(),
+      districtLabelGroup: null,
+      maskLayer: null,
+      boundaryLoaded: false,
+      routeLayer: null,
+      routeRequestSerial: 0,
+      routeController: null,
+      routeLastKey: null,
+      routeData: null,
+      routeClientCache: new Map(),
+      routeCacheTtlMs: 10 * 60 * 1000,
+      homeMarker: null,
+      homePosition: null,
+      safetyLevel: 'none',
+      studentMarker: null,
+      studentAccuracyCircle: null,
+      studentPosition: null,
+      gpsWatchId: null,
+      gpsOverallTimer: null,
+      gpsTracking: false,
+      gpsBestPosition: null,
+      gpsSampleCount: 0,
+      gpsTargetAccuracy: 1,
+      gpsSessionToken: 0,
+      weatherData: null,
+      weatherPendingRequests: new Map(),
+      weatherStudentSerial: 0,
+      weatherSchoolSerial: 0,
+      weatherLastCompletedStudentKey: null,
+      weatherLastCompletedSchoolKey: null,
+      weatherBoundaryTimer: null,
+      weatherCountdownTimer: null,
+      weatherLastSlotMs: null,
+      weatherNextUpdateMs: null
+    };
+
+    const el = {
+      districtSelect: document.getElementById('districtSelect'),
+      schoolList: document.getElementById('schoolList'),
+      totalCount: document.getElementById('totalCount'),
+      visibleCount: document.getElementById('visibleCount'),
+      mapTitle: document.getElementById('mapTitle'),
+      mapSubtitle: document.getElementById('mapSubtitle'),
+      locateStudentButton: document.getElementById('locateStudentButton'),
+      homeButton: document.getElementById('homeButton'),
+      homeManageButton: document.getElementById('homeManageButton'),
+      homeMenu: document.getElementById('homeMenu'),
+      homeMenuStatus: document.getElementById('homeMenuStatus'),
+      homeFocusMenuButton: document.getElementById('homeFocusMenuButton'),
+      homeUpdateMenuButton: document.getElementById('homeUpdateMenuButton'),
+      homeDeleteMenuButton: document.getElementById('homeDeleteMenuButton'),
+      gpsStatus: document.getElementById('gpsStatus'),
+      gpsStatusIcon: document.getElementById('gpsStatusIcon'),
+      gpsStatusTitle: document.getElementById('gpsStatusTitle'),
+      gpsStatusDetail: document.getElementById('gpsStatusDetail'),
+      gpsStatusChip: document.getElementById('gpsStatusChip'),
+      viewAllButton: document.getElementById('viewAllButton'),
+      reloadButton: document.getElementById('reloadButton'),
+      weatherUpdateSlot: document.getElementById('weatherUpdateSlot'),
+      weatherNextUpdate: document.getElementById('weatherNextUpdate'),
+      weatherCountdown: document.getElementById('weatherCountdown'),
+      weatherTitle: document.getElementById('weatherTitle'),
+      weatherSubtitle: document.getElementById('weatherSubtitle'),
+      weatherStatus: document.getElementById('weatherStatus'),
+      weatherStatusText: document.getElementById('weatherStatusText'),
+      weatherEmpty: document.getElementById('weatherEmpty'),
+      weatherEmptyText: document.getElementById('weatherEmptyText'),
+      weatherContent: document.getElementById('weatherContent'),
+      weatherGrid: document.getElementById('weatherGrid'),
+      studentWeatherCard: document.getElementById('studentWeatherCard'),
+      schoolWeatherCard: document.getElementById('schoolWeatherCard'),
+      weatherSourceNote: document.getElementById('weatherSourceNote'),
+      routeMode: document.getElementById('routeMode'),
+      routeRetry: document.getElementById('routeRetry'),
+      routeDirection: document.getElementById('routeDirection'),
+      routeJourneySummary: document.getElementById('routeJourneySummary'),
+      routeStatus: document.getElementById('routeStatus'),
+      routeMetrics: document.getElementById('routeMetrics'),
+      routeDistance: document.getElementById('routeDistance'),
+      routeDuration: document.getElementById('routeDuration'),
+      routeDestination: document.getElementById('routeDestination'),
+      routeNote: document.getElementById('routeNote'),
+      warningContent: document.getElementById('warningContent'),
+      adviceContent: document.getElementById('adviceContent'),
+      toast: document.getElementById('toast')
+    };
+
+    const map = L.map('map', {
+      zoomControl: true,
+      attributionControl: true,
+      maxBoundsViscosity: 1.0,
+      preferCanvas: true
+    }).setView([11.15, 106.67], 10);
+
+    map.attributionControl.setPrefix('Leaflet');
+
+    // Khoa tuong tac ban do mac dinh; mo/khoa bang nut nho duoi +/-
+    let mapInteractionLocked = true;
+    function setMapInteractionLocked(locked) {
+      mapInteractionLocked = Boolean(locked);
+      const handlers = [
+        map.dragging,
+        map.scrollWheelZoom,
+        map.doubleClickZoom,
+        map.touchZoom,
+        map.boxZoom,
+        map.keyboard
+      ];
+      handlers.forEach((handler) => {
+        if (!handler) return;
+        if (mapInteractionLocked) handler.disable();
+        else handler.enable();
+      });
+      if (map.tap) {
+        if (mapInteractionLocked) map.tap.disable();
+        else map.tap.enable();
+      }
+      map.getContainer().classList.toggle('map-locked', mapInteractionLocked);
+      const btn = document.getElementById('mapLockButton');
+      if (btn) {
+        btn.textContent = mapInteractionLocked ? '🔒' : '🔓';
+        btn.title = mapInteractionLocked ? 'Mở khóa để chỉnh bản đồ' : 'Khóa thao tác bản đồ';
+        btn.setAttribute('aria-label', btn.title);
+        btn.setAttribute('aria-pressed', mapInteractionLocked ? 'true' : 'false');
+      }
+    }
+
+    const MapLockControl = L.Control.extend({
+      options: { position: 'topleft' },
+      onAdd: function () {
+        const wrap = L.DomUtil.create('div', 'leaflet-control map-lock-control');
+        const btn = L.DomUtil.create('button', '', wrap);
+        btn.type = 'button';
+        btn.id = 'mapLockButton';
+        L.DomEvent.disableClickPropagation(wrap);
+        L.DomEvent.disableScrollPropagation(wrap);
+        L.DomEvent.on(btn, 'click', (event) => {
+          L.DomEvent.stop(event);
+          setMapInteractionLocked(!mapInteractionLocked);
+        });
+        return wrap;
+      }
+    });
+    map.addControl(new MapLockControl());
+    setMapInteractionLocked(true);
+
+
+    const CurrentLocationControl = L.Control.extend({
+      options: { position: 'bottomright' },
+      onAdd() {
+        const wrap = L.DomUtil.create('div', 'leaflet-control leaflet-control-current-location');
+        const button = L.DomUtil.create('button', 'current-location-btn', wrap);
+        button.type = 'button';
+        button.title = 'Vị trí hiện tại';
+        button.setAttribute('aria-label', 'Vị trí hiện tại');
+        button.innerHTML = '<span class="current-location-icon" aria-hidden="true"></span>';
+        L.DomEvent.disableClickPropagation(wrap);
+        L.DomEvent.disableScrollPropagation(wrap);
+        L.DomEvent.on(button, 'click', event => {
+          L.DomEvent.stop(event);
+          // Explicitly choosing the current-location control must switch the
+          // active origin away from a saved home, even if a GPS fix already exists.
+          activateCurrentLocationMode();
+          if (state.studentPosition && isValidCoordinate(state.studentPosition.lat, state.studentPosition.lon)) {
+            map.flyTo([state.studentPosition.lat, state.studentPosition.lon], 17, { duration: .6 });
+            bringStudentLocationToFront();
+            refreshWeatherIfReady('gps');
+            refreshRoute();
+            return;
+          }
+          locateStudent();
+        });
+        return wrap;
+      }
+    });
+    map.addControl(new CurrentLocationControl());
+
+    L.tileLayer(ESRI_TILE, {
+      maxZoom: 18,
+      minZoom: 8,
+      attribution: 'Tiles © Esri'
+    }).addTo(map);
+
+    const markerGroup = L.layerGroup().addTo(map);
+
+
+
+    const HOME_STORAGE_KEY = 'duong_den_truong_home_gps_v10';
+
+    function homeMarkerIcon() {
+      return L.divIcon({
+        className: '',
+        html: '<div class="home-dot" title="Vị trí nhà đã lưu">🏠</div>',
+        iconSize: [26, 26],
+        iconAnchor: [13, 13]
+      });
+    }
+
+    function isValidCoordinate(lat, lon) {
+      return Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+    }
+
+    function formatSavedAt(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      return new Intl.DateTimeFormat('vi-VN', {
+        hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
+      }).format(date);
+    }
+
+    function renderHomeMarker() {
+      if (!state.homePosition || !isValidCoordinate(state.homePosition.lat, state.homePosition.lon)) {
+        if (state.homeMarker) {
+          map.removeLayer(state.homeMarker);
+          state.homeMarker = null;
+        }
+        return;
+      }
+      const point = [state.homePosition.lat, state.homePosition.lon];
+      if (!state.homeMarker) {
+        state.homeMarker = L.marker(point, {
+          icon: homeMarkerIcon(),
+          title: 'Vị trí nhà đã lưu',
+          zIndexOffset: 1500
+        }).addTo(map);
+      } else {
+        state.homeMarker.setLatLng(point);
+      }
+    }
+
+    function focusSavedHome() {
+      const home = state.homePosition;
+      if (!home || !isValidCoordinate(home.lat, home.lon)) {
+        showToast('Chưa có vị trí nhà riêng đã lưu.');
+        return;
+      }
+      renderHomeMarker();
+      map.flyTo([home.lat, home.lon], 17, { duration: .65 });
+      if (state.homeMarker) state.homeMarker.setZIndexOffset(1800);
+      showToast('Đã chuyển tới vị trí nhà riêng đã lưu.');
+    }
+
+    function closeHomeMenu() {
+      if (el.homeMenu) el.homeMenu.hidden = true;
+    }
+
+    function toggleHomeMenu() {
+      if (!state.homePosition) return;
+      el.homeMenu.hidden = !el.homeMenu.hidden;
+    }
+
+    function handleHomeButton() {
+      const hasHome = Boolean(state.homePosition && isValidCoordinate(state.homePosition.lat, state.homePosition.lon));
+      if (hasHome) {
+        closeHomeMenu();
+        focusSavedHome();
+        return;
+      }
+
+      const gps = state.studentPosition;
+      if (!gps || !isValidCoordinate(gps.lat, gps.lon)) {
+        showToast('Bấm nút tròn vị trí hiện tại trên bản đồ trước, rồi chọn “Đặt nhà riêng”.');
+        return;
+      }
+
+      saveCurrentAsHome();
+      focusSavedHome();
+    }
+
+    function updateJourneySummary() {
+      if (!el.routeJourneySummary) return;
+      const school = selectedSchool();
+      const direction = el.routeDirection?.value || 'current_to_school';
+      const schoolName = school ? escapeHtml(school.short_name || school.name) : 'Chưa chọn trường';
+      let html = '';
+      if (direction === 'home_to_school') {
+        html = `🏠 Nhà riêng <span class="journey-arrow">→</span> 🏫 ${schoolName}`;
+      } else if (direction === 'school_to_home') {
+        html = `🏫 ${schoolName} <span class="journey-arrow">→</span> 🏠 Nhà riêng`;
+      } else {
+        html = `📍 Vị trí hiện tại <span class="journey-arrow">→</span> 🏫 ${schoolName}`;
+      }
+      el.routeJourneySummary.innerHTML = html;
+    }
+
+    function updateHomeControls() {
+      const hasHome = Boolean(state.homePosition && isValidCoordinate(state.homePosition.lat, state.homePosition.lon));
+      const hasGps = Boolean(state.studentPosition && isValidCoordinate(state.studentPosition.lat, state.studentPosition.lon));
+
+      if (el.homeButton) {
+        el.homeButton.textContent = hasHome ? '🏠 Nhà riêng' : '🏠 Đặt nhà riêng';
+        el.homeButton.classList.toggle('saved', hasHome);
+        el.homeButton.title = hasHome ? 'Mở vị trí nhà riêng đã lưu' : 'Lưu vị trí GPS hiện tại làm nhà riêng';
+      }
+      if (el.homeManageButton) el.homeManageButton.classList.toggle('show', hasHome);
+      if (!hasHome) closeHomeMenu();
+
+      if (el.homeUpdateMenuButton) el.homeUpdateMenuButton.disabled = !hasGps;
+      if (el.homeFocusMenuButton) el.homeFocusMenuButton.disabled = !hasHome;
+      if (el.homeDeleteMenuButton) el.homeDeleteMenuButton.disabled = !hasHome;
+
+      if (el.homeMenuStatus) {
+        if (!hasHome) {
+          el.homeMenuStatus.textContent = 'Chưa có vị trí nhà riêng.';
+        } else {
+          const accuracy = Number.isFinite(state.homePosition.accuracy)
+            ? `Sai số lúc lưu ±${formatAccuracy(state.homePosition.accuracy)}`
+            : 'Không có thông tin sai số';
+          const savedAt = state.homePosition.savedAt ? ` · ${formatSavedAt(state.homePosition.savedAt)}` : '';
+          el.homeMenuStatus.textContent = `${accuracy}${savedAt}`;
+        }
+      }
+
+      const homeOptions = Array.from(el.routeDirection.options).filter(option => option.value !== 'current_to_school');
+      homeOptions.forEach(option => { option.disabled = !hasHome; });
+      if (!hasHome && el.routeDirection.value !== 'current_to_school') {
+        el.routeDirection.value = 'current_to_school';
+      }
+      updateJourneySummary();
+    }
+
+    // V14.3: A saved home is a persistent route origin on this browser/device.
+    // It is not the student's current GPS position.
+    function hasSavedHome() {
+      return Boolean(state.homePosition && isValidCoordinate(state.homePosition.lat, state.homePosition.lon));
+    }
+
+    function schoolSelectionHint() {
+      return hasSavedHome()
+        ? '🏠 Đã có Nhà riêng: chỉ cần chọn trường để tự tính tuyến đường.'
+        : state.studentPosition
+          ? '📍 Đã có GPS. Chọn trường để tự tính tuyến đường.'
+          : 'Chọn trường và định vị học sinh để xem tuyến đường.';
+    }
+
+    function loadSavedHome() {
+      try {
+        const raw = localStorage.getItem(HOME_STORAGE_KEY);
+        if (!raw) {
+          state.homePosition = null;
+          updateHomeControls();
+          return;
+        }
+        const saved = JSON.parse(raw);
+        const lat = Number(saved.lat);
+        const lon = Number(saved.lon);
+        if (!isValidCoordinate(lat, lon)) throw new Error('Tọa độ nhà không hợp lệ');
+        state.homePosition = {
+          lat,
+          lon,
+          accuracy: Number.isFinite(Number(saved.accuracy)) ? Number(saved.accuracy) : null,
+          savedAt: saved.savedAt || null
+        };
+        // On every return visit, the saved home becomes the DEFAULT origin.
+        // School selection already calls refreshRoute(), no GPS button required.
+        el.routeDirection.value = 'home_to_school';
+        renderHomeMarker();
+        updateHomeControls();
+        el.routeStatus.textContent = schoolSelectionHint();
+      } catch (error) {
+        console.warn('Không đọc được vị trí nhà đã lưu:', error);
+        localStorage.removeItem(HOME_STORAGE_KEY);
+        state.homePosition = null;
+        updateHomeControls();
+      }
+    }
+
+    function saveCurrentAsHome() {
+      const gps = state.studentPosition;
+      if (!gps || !isValidCoordinate(gps.lat, gps.lon)) {
+        showToast('Hãy bấm “Định vị học sinh” trước khi lưu vị trí nhà.');
+        return;
+      }
+      const home = {
+        lat: Number(gps.lat),
+        lon: Number(gps.lon),
+        accuracy: Number.isFinite(Number(gps.accuracy)) ? Number(gps.accuracy) : null,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(HOME_STORAGE_KEY, JSON.stringify(home));
+      state.homePosition = home;
+      // A newly saved home also becomes the active default journey origin.
+      el.routeDirection.value = 'home_to_school';
+      renderHomeMarker();
+      updateHomeControls();
+      invalidateDepartureWeather();
+      showToast('Đã lưu Nhà riêng. Lần sau chỉ cần chọn trường để xem hành trình.');
+      resetRoute(schoolSelectionHint());
+      if (selectedSchool()) {
+        refreshWeatherIfReady('direction');
+        refreshRoute(true);
+      }
+    }
+
+    function deleteSavedHome() {
+      localStorage.removeItem(HOME_STORAGE_KEY);
+      state.homePosition = null;
+      state.routeClientCache.clear();
+      if (state.homeMarker) {
+        map.removeLayer(state.homeMarker);
+        state.homeMarker = null;
+      }
+      el.routeDirection.value = 'current_to_school';
+      updateHomeControls();
+      invalidateDepartureWeather();
+      resetRoute(state.studentPosition
+        ? 'Đã xóa Nhà riêng. Tuyến đường chuyển về vị trí GPS hiện tại.'
+        : 'Đã xóa Nhà riêng. Hãy định vị để tính hành trình từ vị trí hiện tại.');
+      if (selectedSchool()) {
+        refreshWeatherIfReady('direction');
+        if (state.studentPosition) refreshRoute(true);
+      }
+      showToast('Đã xóa vị trí nhà đã lưu.');
+    }
+
+    function resetRoute(message) {
+      state.routeRequestSerial++;
+      if (state.routeController) state.routeController.abort();
+      state.routeController = null;
+      state.routeLastKey = null;
+      state.routeData = null;
+      if (state.routeLayer) { map.removeLayer(state.routeLayer); state.routeLayer = null; }
+      el.routeMetrics.hidden = true;
+      el.routeStatus.classList.remove('error');
+      el.routeStatus.textContent = message || 'Định vị học sinh và chọn trường để xem đường đi.';
+      updateJourneySummary();
+      renderSafetyGuidance();
+    }
+
+    function applyRouteData(data, school, options = {}) {
+      if (!data || !Array.isArray(data.coordinates) || data.coordinates.length < 2) {
+        throw new Error('Tuyến đường không hợp lệ');
+      }
+      if (state.routeLayer) { map.removeLayer(state.routeLayer); state.routeLayer = null; }
+      state.routeLayer = L.polyline(data.coordinates, {color:'#1679d6', weight:6, opacity:.85, lineJoin:'round'}).addTo(map);
+      state.routeLayer.bringToFront();
+      bringStudentLocationToFront();
+      if (state.homeMarker) state.homeMarker.setZIndexOffset(1500);
+
+      if (options.fit !== false) {
+        const bounds = state.routeLayer.getBounds();
+        if (bounds.isValid()) map.fitBounds(bounds.pad(.12), {maxZoom:15, animate:true});
+      }
+
+      state.routeData = data;
+      el.routeDistance.textContent = `${Number(data.distance_km).toLocaleString('vi-VN')} km`;
+      el.routeDuration.textContent = `≈ ${data.duration_minutes} phút`;
+      el.routeDestination.textContent = data.destination_name || data.school_name || school.name;
+      el.routeMetrics.hidden = false;
+      el.routeStatus.classList.remove('error');
+      el.routeStatus.textContent = options.clientCached
+        ? '✓ Đã dùng tuyến đường vừa tính trên thiết bị.'
+        : `✓ Đã tính tuyến đường theo ${data.provider}. ${data.cached ? 'Dùng kết quả lưu tạm.' : ''}`;
+      el.routeNote.textContent = 'Thời gian là ước tính theo mạng đường, KHÔNG bao gồm kẹt xe, thời tiết, ngập hoặc tốc độ di chuyển thực tế. ' + (data.note || 'Nguồn: OpenStreetMap.');
+      updateJourneySummary();
+      renderSafetyGuidance();
+    }
+
+    function getClientRouteCache(key) {
+      const item = state.routeClientCache.get(key);
+      if (!item) return null;
+      if (Date.now() - item.savedAt > state.routeCacheTtlMs) {
+        state.routeClientCache.delete(key);
+        return null;
+      }
+      return item.data;
+    }
+
+    function putClientRouteCache(key, data) {
+      if (state.routeClientCache.size > 40) {
+        const firstKey = state.routeClientCache.keys().next().value;
+        if (firstKey) state.routeClientCache.delete(firstKey);
+      }
+      state.routeClientCache.set(key, { savedAt: Date.now(), data });
+    }
+
+    async function refreshRoute(force = false) {
+      const school = selectedSchool();
+      const gps = state.studentPosition;
+      const home = state.homePosition;
+      const direction = el.routeDirection.value || 'current_to_school';
+      updateJourneySummary();
+
+      if (!school) {
+        resetRoute('Hãy chọn trường trong danh sách để tính tuyến đường.');
+        return;
+      }
+
+      if (direction === 'current_to_school' && !gps) {
+        resetRoute('Đã chọn trường. Hãy bấm nút vị trí hiện tại trên bản đồ để tính tuyến đường.');
+        return;
+      }
+
+      if ((direction === 'home_to_school' || direction === 'school_to_home') && !hasSavedHome()) {
+        resetRoute('Chưa có vị trí nhà riêng hợp lệ trên thiết bị.');
+        return;
+      }
+
+      const mode = el.routeMode.value;
+      const sourcePoint = direction === 'current_to_school' ? gps : home;
+      const sourceKey = sourcePoint ? `${sourcePoint.lat.toFixed(5)}|${sourcePoint.lon.toFixed(5)}` : 'none';
+      const key = `${school.id}|${direction}|${sourceKey}|${mode}`;
+      if (!force && state.routeLastKey === key && state.routeData) return;
+
+      if (!force) {
+        const cachedData = getClientRouteCache(key);
+        if (cachedData) {
+          state.routeLastKey = key;
+          applyRouteData(cachedData, school, { clientCached: true });
+          return;
+        }
+      }
+      state.routeLastKey = key;
+
+      if (state.routeController) state.routeController.abort();
+      const controller = new AbortController();
+      state.routeController = controller;
+      const serial = ++state.routeRequestSerial;
+      el.routeStatus.classList.remove('error');
+      el.routeStatus.textContent = 'Đang tìm tuyến đường…';
+      el.routeMetrics.hidden = true;
+      if (state.routeLayer) { map.removeLayer(state.routeLayer); state.routeLayer = null; }
+
+      const params = new URLSearchParams({ school_id: school.id, mode, direction });
+      if (direction === 'current_to_school') {
+        params.set('user_lat', gps.lat);
+        params.set('user_lon', gps.lon);
+      } else {
+        params.set('home_lat', home.lat);
+        params.set('home_lon', home.lon);
+      }
+
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      try {
+        const response = await fetch(`/api/route?${params}`, {signal: controller.signal, cache:'no-store'});
+        const data = await response.json();
+        if (!response.ok || !data.ok) throw new Error(data.error || 'Không tính được tuyến đường');
+        if (serial !== state.routeRequestSerial) return;
+        putClientRouteCache(key, data);
+        applyRouteData(data, school);
+      } catch (error) {
+        if (serial !== state.routeRequestSerial) return;
+        el.routeStatus.classList.add('error');
+        el.routeStatus.textContent = error.name === 'AbortError'
+          ? 'Tuyến đường phản hồi chậm. Bấm “Tính lại đường” để thử.'
+          : `Chưa lấy được đường đi: ${error.message}`;
+        state.routeLastKey = null;
+      } finally {
+        clearTimeout(timeout);
+        if (state.routeController === controller) state.routeController = null;
+      }
+    }
+    el.routeMode.addEventListener('change', () => refreshRoute());
+    el.routeRetry.addEventListener('click', () => refreshRoute(true));
+    el.routeDirection.addEventListener('change', () => {
+      updateJourneySummary();
+      invalidateDepartureWeather();
+      refreshWeatherIfReady('direction');
+      refreshRoute();
+    });
+    el.homeButton.addEventListener('click', handleHomeButton);
+    el.homeManageButton.addEventListener('click', event => {
+      event.stopPropagation();
+      toggleHomeMenu();
+    });
+    el.homeFocusMenuButton.addEventListener('click', () => {
+      closeHomeMenu();
+      focusSavedHome();
+    });
+    el.homeUpdateMenuButton.addEventListener('click', () => {
+      closeHomeMenu();
+      saveCurrentAsHome();
+    });
+    el.homeDeleteMenuButton.addEventListener('click', () => {
+      closeHomeMenu();
+      deleteSavedHome();
+    });
+    document.addEventListener('click', event => {
+      if (!el.homeMenu.hidden && !event.target.closest('#homeToolbarWrap')) closeHomeMenu();
+    });
+
+    function studentMarkerIcon() {
+      return L.divIcon({
+        className: '',
+        html: '<div class="student-dot" title="Vị trí học sinh"></div>',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+        popupAnchor: [0, -10]
+      });
+    }
+
+    function geolocationErrorMessage(error) {
+      if (!error) return 'Không xác định được vị trí học sinh.';
+      if (error.code === 1) return 'Bạn chưa cho phép trình duyệt truy cập vị trí.';
+      if (error.code === 2) return 'Thiết bị chưa xác định được vị trí hiện tại.';
+      if (error.code === 3) return 'GPS đang phản hồi chậm. Hãy thử lại ở nơi thoáng.';
+      return error.message || 'Không xác định được vị trí học sinh.';
+    }
+
+    function formatAccuracy(value) {
+      if (!Number.isFinite(value)) return 'chưa rõ';
+      if (value < 10) return `${value.toFixed(1)} m`;
+      return `${Math.round(value)} m`;
+    }
+
+    function updateGpsStatus(mode, title, detail, chip, icon) {
+      el.gpsStatus.hidden = false;
+      el.gpsStatus.className = `gps-status ${mode || ''}`.trim();
+      el.gpsStatusIcon.textContent = icon || '🎯';
+      el.gpsStatusTitle.textContent = title;
+      el.gpsStatusDetail.textContent = detail;
+      el.gpsStatusChip.textContent = chip;
+    }
+
+    function studentLocationPopup(accuracy, targetReached) {
+      const accuracyText = formatAccuracy(accuracy);
+      const resultText = targetReached
+        ? 'Đã đạt mục tiêu ≤ 1 m theo thông số thiết bị.'
+        : 'Đây là mẫu tốt nhất hiện có; chưa đạt mục tiêu 1 m.';
+      return `
+        <p class="popup-name">📍 Vị trí học sinh</p>
+        <p class="popup-address">Sai số thiết bị báo về: ±${accuracyText}.<br>${resultText}</p>
+      `;
+    }
+
+    function bringStudentLocationToFront() {
+      if (state.studentAccuracyCircle) state.studentAccuracyCircle.bringToFront();
+      if (state.studentMarker) state.studentMarker.setZIndexOffset(2000);
+    }
+
+    function renderStudentLocation(lat, lon, accuracy, options = {}) {
+      const point = L.latLng(lat, lon);
+      const targetReached = Number.isFinite(accuracy) && accuracy <= state.gpsTargetAccuracy;
+      state.studentPosition = {
+        lat,
+        lon,
+        accuracy,
+        targetReached,
+        provisional: options.provisional === true
+      };
+      updateHomeControls();
+
+      const circleRadius = Number.isFinite(accuracy) ? Math.max(1, accuracy) : 25;
+      if (!state.studentAccuracyCircle) {
+        state.studentAccuracyCircle = L.circle(point, {
+          radius: circleRadius,
+          color: targetReached ? '#0b9a63' : '#e84c4c',
+          weight: 1.8,
+          opacity: .7,
+          fillColor: targetReached ? '#0b9a63' : '#e84c4c',
+          fillOpacity: .10,
+          interactive: false
+        }).addTo(map);
+      } else {
+        state.studentAccuracyCircle
+          .setLatLng(point)
+          .setRadius(circleRadius)
+          .setStyle({
+            color: targetReached ? '#0b9a63' : '#e84c4c',
+            fillColor: targetReached ? '#0b9a63' : '#e84c4c'
+          });
+      }
+
+      if (!state.studentMarker) {
+        state.studentMarker = L.marker(point, {
+          icon: studentMarkerIcon(),
+          title: 'Vị trí học sinh',
+          riseOnHover: true,
+          zIndexOffset: 2000
+        }).addTo(map);
+      } else {
+        state.studentMarker.setLatLng(point);
+      }
+
+      bringStudentLocationToFront();
+
+      if (options.focus) {
+        const zoom = accuracy <= 3 ? 18 : accuracy <= 10 ? 17 : accuracy <= 30 ? 16 : 15;
+        const allowedBounds = state.provinceBounds?.isValid()
+          ? state.provinceBounds.pad(0.08)
+          : L.latLngBounds([[10.68, 106.20], [11.64, 107.12]]);
+
+        if (allowedBounds.contains(point)) {
+          map.flyTo(point, zoom, { duration: .65 });
+        }
+      }
+    }
+
+    function clearGpsWatch() {
+      if (state.gpsWatchId !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(state.gpsWatchId);
+      }
+      state.gpsWatchId = null;
+
+      if (state.gpsOverallTimer !== null) {
+        clearTimeout(state.gpsOverallTimer);
+      }
+      state.gpsOverallTimer = null;
+      state.gpsTracking = false;
+    }
+
+    function resetGpsButton() {
+      el.locateStudentButton.disabled = false;
+      el.locateStudentButton.classList.remove('gps-measuring', 'gps-warning');
+      if (state.studentPosition) {
+        const accuracy = state.studentPosition.accuracy;
+        if (state.studentPosition.targetReached) {
+          el.locateStudentButton.classList.add('gps-active');
+          el.locateStudentButton.textContent = `📍 Đạt ±${formatAccuracy(accuracy)}`;
+        } else {
+          el.locateStudentButton.classList.add('gps-warning');
+          el.locateStudentButton.textContent = `📍 Tốt nhất ±${formatAccuracy(accuracy)}`;
+        }
+      } else {
+        el.locateStudentButton.classList.remove('gps-active');
+        el.locateStudentButton.textContent = '📍 Định vị học sinh';
+      }
+    }
+
+    function finishGpsTracking(reason) {
+      const best = state.gpsBestPosition;
+      clearGpsWatch();
+
+      if (!best) {
+        resetGpsButton();
+        updateGpsStatus(
+          'error',
+          'Chưa lấy được tọa độ',
+          'Thiết bị chưa gửi về mẫu GPS hợp lệ. Hãy bật vị trí và thử lại ở nơi thoáng.',
+          'Chưa có dữ liệu',
+          '⚠️'
+        );
+        updateWeatherReadiness();
+        return;
+      }
+
+      const reached = best.accuracy <= state.gpsTargetAccuracy;
+      renderStudentLocation(best.lat, best.lon, best.accuracy, {
+        provisional: !reached,
+        openPopup: false,
+        focus: true
+      });
+      resetGpsButton();
+      refreshWeatherIfReady('gps');
+      refreshRoute();
+
+      if (reached) {
+        updateGpsStatus(
+          'success',
+          'Đã đạt mục tiêu định vị',
+          `Thiết bị báo sai số ±${formatAccuracy(best.accuracy)} sau ${state.gpsSampleCount} mẫu GPS.`,
+          'Đạt ≤ 1 m',
+          '✅'
+        );
+        showToast(`Đã định vị với sai số ±${formatAccuracy(best.accuracy)}.`);
+        return;
+      }
+
+      const reasonText = reason === 'cancelled'
+        ? 'Bạn đã dừng quá trình lấy mẫu.'
+        : 'Đã hết 60 giây lấy mẫu chính xác cao.';
+      updateGpsStatus(
+        'warning',
+        'Chưa đạt sai số 1 m',
+        `${reasonText} Đang dùng mẫu tốt nhất ±${formatAccuracy(best.accuracy)}. Bấm lại để tiếp tục thử.`,
+        `Tốt nhất ±${formatAccuracy(best.accuracy)}`,
+        '📍'
+      );
+      showToast(`Chưa đạt 1 m; mẫu tốt nhất là ±${formatAccuracy(best.accuracy)}.`);
+    }
+
+    function activateCurrentLocationMode() {
+      if (el.routeDirection && el.routeDirection.value !== 'current_to_school') {
+        el.routeDirection.value = 'current_to_school';
+        el.routeDirection.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
+    function locateStudent() {
+      // A direct GPS request means the user wants GPS, not the saved-home origin.
+      activateCurrentLocationMode();
+      if (!navigator.geolocation) {
+        showToast('Trình duyệt này không hỗ trợ định vị.');
+        return;
+      }
+
+      if (state.gpsTracking) {
+        finishGpsTracking('cancelled');
+        return;
+      }
+
+      state.gpsSessionToken += 1;
+      const sessionToken = state.gpsSessionToken;
+      state.gpsTracking = true;
+      state.gpsBestPosition = null;
+      state.gpsSampleCount = 0;
+
+      el.locateStudentButton.disabled = false;
+      el.locateStudentButton.classList.remove('gps-active', 'gps-warning');
+      el.locateStudentButton.classList.add('gps-measuring');
+      el.locateStudentButton.textContent = '✕ Dừng · đang tìm ≤ 1 m';
+
+      updateGpsStatus(
+        'measuring',
+        'Đang lấy nhiều mẫu GPS',
+        'Giữ thiết bị yên, bật GPS và đứng gần cửa sổ hoặc nơi thoáng. Thời gian tối đa 60 giây.',
+        'Mục tiêu ≤ 1 m',
+        '🎯'
+      );
+
+      state.gpsOverallTimer = window.setTimeout(() => {
+        if (state.gpsTracking && sessionToken === state.gpsSessionToken) {
+          finishGpsTracking('timeout');
+        }
+      }, 60000);
+
+      state.gpsWatchId = navigator.geolocation.watchPosition(
+        position => {
+          if (!state.gpsTracking || sessionToken !== state.gpsSessionToken) return;
+
+          const lat = Number(position.coords.latitude);
+          const lon = Number(position.coords.longitude);
+          const accuracy = Number(position.coords.accuracy);
+          if (!Number.isFinite(lat) || !Number.isFinite(lon) || !Number.isFinite(accuracy)) return;
+
+          state.gpsSampleCount += 1;
+          const sample = {
+            lat,
+            lon,
+            accuracy: Math.max(0, accuracy),
+            timestamp: Number(position.timestamp) || Date.now()
+          };
+
+          if (!state.gpsBestPosition || sample.accuracy < state.gpsBestPosition.accuracy) {
+            state.gpsBestPosition = sample;
+            renderStudentLocation(sample.lat, sample.lon, sample.accuracy, {
+              provisional: sample.accuracy > state.gpsTargetAccuracy,
+              openPopup: false,
+              focus: state.gpsSampleCount === 1
+            });
+          }
+
+          if (state.gpsSampleCount === 1) {
+            // Acquiring GPS must not replace home weather when the home journey
+            // remains selected. A user can explicitly choose "Hiện tại → Trường".
+            if (el.routeDirection.value === 'current_to_school') {
+              invalidateDepartureWeather();
+              refreshWeatherIfReady('gps-first');
+            }
+            refreshRoute();
+          }
+
+          const best = state.gpsBestPosition;
+          el.locateStudentButton.textContent = `✕ Dừng · tốt nhất ±${formatAccuracy(best.accuracy)}`;
+          updateGpsStatus(
+            'measuring',
+            'Đang cải thiện độ chính xác',
+            `Đã nhận ${state.gpsSampleCount} mẫu. Sai số tốt nhất hiện tại: ±${formatAccuracy(best.accuracy)}. Chỉ báo đạt khi thiết bị trả về ≤ 1 m.`,
+            `±${formatAccuracy(best.accuracy)} → 1 m`,
+            '🎯'
+          );
+
+          if (best.accuracy <= state.gpsTargetAccuracy) {
+            finishGpsTracking('target');
+          }
+        },
+        error => {
+          if (!state.gpsTracking || sessionToken !== state.gpsSessionToken) return;
+
+          if (error?.code === 3) {
+            updateGpsStatus(
+              'measuring',
+              'Đang chờ tín hiệu GPS tốt hơn',
+              'Thiết bị phản hồi chậm nhưng ứng dụng vẫn tiếp tục lấy mẫu cho đến hết 60 giây.',
+              state.gpsBestPosition ? `Tốt nhất ±${formatAccuracy(state.gpsBestPosition.accuracy)}` : 'Đang chờ GPS',
+              '⏳'
+            );
+            return;
+          }
+
+          clearGpsWatch();
+          resetGpsButton();
+          updateGpsStatus(
+            'error',
+            'Không thể định vị',
+            geolocationErrorMessage(error),
+            'Lỗi GPS',
+            '⚠️'
+          );
+          showToast(geolocationErrorMessage(error));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    function normalizeText(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toLowerCase()
+        .trim();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function showToast(message) {
+      el.toast.textContent = message;
+      el.toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => el.toast.classList.remove('show'), 2200);
+    }
+
+    async function fetchJson(url, options) {
+      const response = await fetch(url, options);
+      let payload;
+      try {
+        payload = await response.json();
+      } catch (_) {
+        throw new Error(`Phản hồi không phải JSON (${response.status})`);
+      }
+      if (!response.ok) {
+        const detail = payload?.details && typeof payload.details === 'object'
+          ? Object.values(payload.details).filter(Boolean).join(' · ')
+          : '';
+        throw new Error(detail || payload.error || `HTTP ${response.status}`);
+      }
+      return payload;
+    }
+
+    function vietnamDate(value) {
+      if (!value) return null;
+      const source = String(value);
+      const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(source);
+      const parsed = new Date(hasZone ? source : `${source}+07:00`);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function formatVietnamTime(value, withDate = false) {
+      const date = value instanceof Date ? value : vietnamDate(value);
+      if (!date) return '--:--';
+      const options = {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      };
+      if (withDate) {
+        options.day = '2-digit';
+        options.month = '2-digit';
+        options.year = 'numeric';
+      }
+      return new Intl.DateTimeFormat('vi-VN', options).format(date);
+    }
+
+    function currentFiveMinuteWindow(reference = new Date()) {
+      const update = new Date(reference.getTime());
+      update.setSeconds(0, 0);
+      update.setMinutes(update.getMinutes() - (update.getMinutes() % 5));
+      const next = new Date(update.getTime() + 5 * 60 * 1000);
+      return { update, next };
+    }
+
+    function pad2(value) {
+      return String(Math.max(0, Math.floor(value))).padStart(2, '0');
+    }
+
+    function setWeatherStatus(mode, text, icon = 'ℹ️') {
+      el.weatherStatus.className = `weather-status ${mode || ''}`.trim();
+      el.weatherStatus.innerHTML = `<span aria-hidden="true">${escapeHtml(icon)}</span><span id="weatherStatusText">${escapeHtml(text)}</span>`;
+      el.weatherStatusText = document.getElementById('weatherStatusText');
+    }
+
+    function updateWeatherClock() {
+      const fallback = currentFiveMinuteWindow();
+      const updateMs = Number.isFinite(state.weatherLastSlotMs) ? state.weatherLastSlotMs : fallback.update.getTime();
+      const nextMs = Number.isFinite(state.weatherNextUpdateMs) ? state.weatherNextUpdateMs : fallback.next.getTime();
+      const remaining = Math.max(0, nextMs - Date.now());
+      const minutes = Math.floor(remaining / 60000);
+      const seconds = Math.floor((remaining % 60000) / 1000);
+
+      el.weatherUpdateSlot.textContent = `Mốc gần nhất: ${formatVietnamTime(new Date(updateMs))}`;
+      el.weatherNextUpdate.textContent = `Tiếp theo: ${formatVietnamTime(new Date(nextMs))}`;
+      el.weatherCountdown.textContent = `Còn ${pad2(minutes)}:${pad2(seconds)}`;
+    }
+
+    function clearWeatherTimers() {
+      if (state.weatherBoundaryTimer !== null) clearTimeout(state.weatherBoundaryTimer);
+      if (state.weatherCountdownTimer !== null) clearInterval(state.weatherCountdownTimer);
+      state.weatherBoundaryTimer = null;
+      state.weatherCountdownTimer = null;
+    }
+
+    function scheduleWeatherBoundary() {
+      if (state.weatherBoundaryTimer !== null) clearTimeout(state.weatherBoundaryTimer);
+      const windowInfo = currentFiveMinuteWindow();
+      const delay = Math.max(250, windowInfo.next.getTime() - Date.now() + 350);
+      state.weatherBoundaryTimer = window.setTimeout(async () => {
+        const newWindow = currentFiveMinuteWindow();
+        if (!state.weatherData) state.weatherLastSlotMs = newWindow.update.getTime();
+        state.weatherNextUpdateMs = newWindow.next.getTime();
+        updateWeatherClock();
+        await refreshWeatherIfReady('scheduled');
+        scheduleWeatherBoundary();
+      }, delay);
+    }
+
+    function initWeatherSchedule() {
+      const windowInfo = currentFiveMinuteWindow();
+      if (!Number.isFinite(state.weatherLastSlotMs)) state.weatherLastSlotMs = windowInfo.update.getTime();
+      if (!Number.isFinite(state.weatherNextUpdateMs)) state.weatherNextUpdateMs = windowInfo.next.getTime();
+      updateWeatherClock();
+      if (state.weatherCountdownTimer !== null) clearInterval(state.weatherCountdownTimer);
+      state.weatherCountdownTimer = window.setInterval(updateWeatherClock, 1000);
+      scheduleWeatherBoundary();
+    }
+
+    function selectedSchool() {
+      return state.selectedId ? state.schoolById.get(state.selectedId) : null;
+    }
+
+    function weatherDeparture() {
+      const direction = el.routeDirection?.value || 'current_to_school';
+      if (direction === 'home_to_school' || direction === 'school_to_home') {
+        if (!hasSavedHome()) return null;
+        return {
+          lat: state.homePosition.lat,
+          lon: state.homePosition.lon,
+          kind: 'home',
+          name: 'Nhà riêng (đã lưu)',
+          description: 'Tọa độ Nhà riêng đã lưu trên thiết bị, không phải GPS hiện tại'
+        };
+      }
+      const gps = state.studentPosition;
+      if (!gps || !isValidCoordinate(gps.lat, gps.lon)) return null;
+      return {
+        lat: gps.lat,
+        lon: gps.lon,
+        kind: 'gps',
+        name: 'Vị trí hiện tại',
+        description: 'Tọa độ GPS hiện tại của học sinh'
+      };
+    }
+
+    function hasDeparturePosition() {
+      return Boolean(weatherDeparture());
+    }
+
+    // Clear the old origin's weather before another origin is selected.
+    // Serial numbers prevent in-flight requests from showing stale GPS/home data.
+    function invalidateDepartureWeather() {
+      state.weatherStudentSerial += 1;
+      state.weatherLastCompletedStudentKey = null;
+      if (state.weatherData) state.weatherData = { ...state.weatherData, student: null };
+      for (const [key, controller] of state.weatherPendingRequests.entries()) {
+        if (key.includes('student:')) {
+          controller.abort();
+          state.weatherPendingRequests.delete(key);
+        }
+      }
+      updateWeatherReadiness();
+      renderSafetyGuidance();
+    }
+
+    function applyWeatherDisplayMode(hasStudent, hasSchool) {
+      const departure = weatherDeparture();
+      const originName = departure?.kind === 'home' ? 'Nhà riêng đã lưu' : 'vị trí học sinh';
+      const visibleCount = Number(hasStudent) + Number(hasSchool);
+      el.weatherGrid.classList.toggle('single', visibleCount === 1);
+      el.weatherGrid.classList.toggle('dual', visibleCount === 2);
+
+      el.studentWeatherCard.hidden = !hasStudent;
+      el.schoolWeatherCard.hidden = !hasSchool;
+
+      if (hasStudent && hasSchool) {
+        el.weatherTitle.textContent = `Thời tiết tại ${originName} và trường`;
+        el.weatherSubtitle.textContent = 'Hai thẻ thời tiết theo tọa độ điểm đã chọn; thông tin Nhà riêng không phải GPS hiện tại.';
+      } else if (hasStudent) {
+        el.weatherTitle.textContent = `Thời tiết tại ${originName}`;
+        el.weatherSubtitle.textContent = departure?.kind === 'home'
+          ? 'Thời tiết ước tính theo tọa độ nhà đã lưu. Chọn trường để xem hành trình.'
+          : 'Đang hiển thị thời tiết tại GPS hiện tại. Có thể chọn thêm trường sau.';
+      } else if (hasSchool) {
+        el.weatherTitle.textContent = 'Thời tiết tại trường đã chọn';
+        el.weatherSubtitle.textContent = 'Đang hiển thị riêng thời tiết tại trường. Có thể định vị học sinh sau.';
+      } else {
+        el.weatherTitle.textContent = 'Chọn một điểm là xem được ngay';
+        el.weatherSubtitle.textContent = 'Chọn trường để xem thời tiết tại trường; bấm định vị để xem thời tiết tại vị trí học sinh. Chọn đủ hai điểm để so sánh.';
+      }
+    }
+
+    function renderWeatherCardsFromState() {
+      const school = selectedSchool();
+      const departure = weatherDeparture();
+      const hasStudent = Boolean(departure);
+      const hasSchool = Boolean(school);
+      const data = state.weatherData || {};
+
+      applyWeatherDisplayMode(hasStudent, hasSchool);
+
+      if (hasStudent) {
+        const studentLocation = {
+          ...(data.student || { loading: true }),
+          name: departure.name,
+          description: departure.description
+        };
+        const studentStateClass = studentLocation?.weather
+          ? ''
+          : studentLocation?.loading ? ' loading-card' : ' error-card';
+        el.studentWeatherCard.className = `weather-card student${studentStateClass}`;
+        el.studentWeatherCard.innerHTML = weatherCardHtml(studentLocation, 'student');
+      } else {
+        el.studentWeatherCard.className = 'weather-card student';
+        el.studentWeatherCard.innerHTML = '';
+      }
+
+      if (hasSchool) {
+        const schoolLocation = data.school || {
+          id: school.id,
+          name: school.short_name || school.name,
+          address: school.address,
+          loading: true
+        };
+        const schoolStateClass = schoolLocation?.weather
+          ? ''
+          : schoolLocation?.loading ? ' loading-card' : ' error-card';
+        el.schoolWeatherCard.className = `weather-card school${schoolStateClass}`;
+        el.schoolWeatherCard.innerHTML = weatherCardHtml(schoolLocation, 'school');
+      } else {
+        el.schoolWeatherCard.className = 'weather-card school';
+        el.schoolWeatherCard.innerHTML = '';
+      }
+    }
+
+    function updateWeatherReadiness() {
+      const school = selectedSchool();
+      const departure = weatherDeparture();
+      const hasStudent = Boolean(departure);
+      const hasSchool = Boolean(school);
+
+      applyWeatherDisplayMode(hasStudent, hasSchool);
+
+      if (!hasStudent && !hasSchool) {
+        state.weatherData = null;
+        el.weatherContent.hidden = true;
+        el.weatherEmpty.hidden = false;
+        el.weatherEmptyText.textContent = 'Chọn trường hoặc bấm “Định vị học sinh”.';
+        setWeatherStatus('', 'Chọn trường để xem dự báo; nếu đã lưu nhà, hệ thống sẽ tự dùng tọa độ nhà.', 'ℹ️');
+        return false;
+      }
+
+      el.weatherEmpty.hidden = true;
+      el.weatherContent.hidden = false;
+      renderWeatherCardsFromState();
+
+      if (hasStudent && hasSchool) {
+        setWeatherStatus('', departure.kind === 'home'
+          ? 'Đã có Nhà riêng và trường: dự báo đang theo tọa độ nhà đã lưu, không phải GPS hiện tại.'
+          : 'Đã có GPS và trường: có thể so sánh thời tiết giữa hai điểm.', '🌦️');
+      } else if (hasSchool) {
+        setWeatherStatus('', `Đang hiển thị thời tiết tại ${school.short_name || school.name}. Có thể định vị học sinh sau.`, '🏫');
+      } else {
+        setWeatherStatus('', departure.kind === 'home'
+          ? 'Đang xem thời tiết tại Nhà riêng đã lưu. Chọn trường để tự tính đường.'
+          : 'Đang xem thời tiết tại GPS hiện tại. Có thể chọn thêm trường sau.', '📍');
+      }
+      return true;
+    }
+
+    function metricNumber(value) {
+      return value === null || value === undefined || value === '' ? NaN : Number(value);
+    }
+
+    function numericText(value, digits = 0, suffix = '') {
+      const number = metricNumber(value);
+      if (!Number.isFinite(number)) return `--${suffix}`;
+      return `${number.toFixed(digits)}${suffix}`;
+    }
+
+    function temperatureText(value) {
+      const number = metricNumber(value);
+      if (!Number.isFinite(number)) return '--°C';
+      const digits = Math.abs(number - Math.round(number)) >= 0.05 ? 1 : 0;
+      return `${number.toFixed(digits)}°C`;
+    }
+
+    function forecastHtml(items) {
+      if (!Array.isArray(items) || !items.length) {
+        return '<div class="forecast-item"><span class="forecast-time">Chưa có</span><span class="forecast-icon">–</span><div class="forecast-values"><strong>--°C</strong><span>Chưa có dự báo</span></div></div>';
+      }
+      return items.map(item => {
+        const probability = metricNumber(item?.precipitation_probability_percent);
+        const rainText = Number.isFinite(probability) ? `${Math.round(probability)}% mưa` : 'Chưa rõ mưa';
+        return `
+          <div class="forecast-item">
+            <span class="forecast-time">${escapeHtml(formatVietnamTime(item?.time))}</span>
+            <span class="forecast-icon" aria-hidden="true">${escapeHtml(item?.icon || '🌤️')}</span>
+            <div class="forecast-values">
+              <strong>${escapeHtml(temperatureText(item?.temperature_c))}</strong>
+              <span>${escapeHtml(rainText)} · ${escapeHtml(item?.condition || 'Chưa rõ')}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function weatherCardHtml(location, kind) {
+      const weather = location?.weather;
+      const locationName = location?.name || (kind === 'student' ? 'Vị trí học sinh' : 'Trường học');
+      const address = kind === 'school' ? location?.address : (location?.description || 'Tọa độ GPS hiện tại của học sinh');
+      const isReturnHome = el.routeDirection.value === 'school_to_home';
+      const locationType = kind === 'student'
+        ? (isReturnHome ? '🏠 Điểm đến · Nhà riêng' : '📍 Điểm xuất phát')
+        : (isReturnHome ? '🏫 Điểm xuất phát' : '🏫 Điểm đến');
+
+      if (!weather) {
+        const isLoading = location?.loading === true;
+        const message = isLoading
+          ? 'Đang lấy dữ liệu mới nhất từ nguồn thời tiết…'
+          : (location?.error || 'Chưa lấy được dữ liệu thời tiết cho vị trí này.');
+        return `
+          <div class="weather-card-head">
+            <div>
+              <p class="weather-location-label">${escapeHtml(locationType)}</p>
+              <h3 class="weather-location-name">${escapeHtml(locationName)}</h3>
+              <p class="weather-location-address">${escapeHtml(address || '')}</p>
+            </div>
+          </div>
+          <div class="${isLoading ? 'weather-loading-body' : 'weather-error-body'}">
+            <div>${isLoading ? '⏳' : '⚠️'} ${escapeHtml(message)}</div>
+            ${isLoading ? '' : '<button class="weather-retry" type="button" onclick="refreshWeatherIfReady(\'manual\')">↻ Thử lại</button>'}
+          </div>
+        `;
+      }
+
+      const current = weather.current || {};
+      const sourceTime = formatVietnamTime(weather.source_time, true);
+      const probability = metricNumber(current.precipitation_probability_percent);
+      const probabilityText = Number.isFinite(probability) ? `${Math.round(probability)}%` : '--%';
+      const precipitation = metricNumber(current.precipitation_mm);
+      const precipitationText = Number.isFinite(precipitation) ? `${precipitation.toFixed(1)} mm` : '-- mm';
+      const humidity = metricNumber(current.humidity_percent);
+      const wind = metricNumber(current.wind_speed_kmh);
+      const providerName = weather?.provider?.name || 'Nguồn thời tiết';
+      const isStale = weather?.stale === true;
+      const chipClass = isStale ? ' stale' : '';
+      const chipText = isStale ? 'Dữ liệu Open-Meteo cũ'
+        : kind === 'student' && weatherDeparture()?.kind === 'home'
+          ? 'Open-Meteo · theo Nhà riêng đã lưu' : 'Open-Meteo · theo tọa độ';
+      const syncText = isStale
+        ? `cũ khoảng ${Number.isFinite(Number(weather?.stale_age_minutes)) ? Number(weather.stale_age_minutes).toFixed(0) : '?'} phút`
+        : (location?.from_cache ? 'đã đồng bộ ở mốc này' : 'vừa đồng bộ nguồn');
+
+      return `
+        <div class="weather-card-head">
+          <div>
+            <p class="weather-location-label">${escapeHtml(locationType)}</p>
+            <h3 class="weather-location-name">${escapeHtml(locationName)}</h3>
+            <p class="weather-location-address">${escapeHtml(address || '')}</p>
+          </div>
+          <span class="weather-live-chip${chipClass}">${escapeHtml(chipText)}</span>
+        </div>
+        <div class="weather-main">
+          <div class="weather-main-icon" aria-hidden="true">${escapeHtml(current.icon || '🌤️')}</div>
+          <div>
+            <p class="weather-temperature">${escapeHtml(temperatureText(current.temperature_c))}</p>
+            <p class="weather-condition">${escapeHtml(current.condition || 'Chưa xác định')}</p>
+          </div>
+        </div>
+        <div class="weather-metrics">
+          <div class="weather-metric"><span>Cảm giác</span><strong>${escapeHtml(temperatureText(current.apparent_temperature_c))}</strong></div>
+          <div class="weather-metric"><span>Độ ẩm</span><strong>${escapeHtml(numericText(humidity, 0, '%'))}</strong></div>
+          <div class="weather-metric"><span>Khả năng mưa (theo giờ)</span><strong>${escapeHtml(probabilityText)}</strong></div>
+          <div class="weather-metric"><span>Lượng mưa</span><strong>${escapeHtml(precipitationText)}</strong></div>
+          <div class="weather-metric"><span>Gió</span><strong>${escapeHtml(numericText(wind, 1, ' km/h'))}</strong></div>
+        </div>
+        <div class="forecast-box">
+          <div class="forecast-title"><strong>Hai mốc giờ tiếp theo</strong><span>Dự báo theo giờ</span></div>
+          <div class="forecast-row">${forecastHtml(weather.forecast)}</div>
+        </div>
+        <div class="weather-card-footer">
+          <span>Dữ liệu nguồn: ${escapeHtml(sourceTime)}</span>
+          <span><strong>Nguồn:</strong> ${escapeHtml(providerName)}</span>
+        </div>
+      `;
+    }
+
+    function renderWeather(payload) {
+      const previous = state.weatherData || {};
+      const merged = {
+        ...previous,
+        ...payload,
+        provider: payload?.provider || previous.provider,
+        schedule: payload?.schedule || previous.schedule,
+        student: payload?.student ?? previous.student ?? null,
+        school: payload?.school ?? previous.school ?? null
+      };
+      state.weatherData = merged;
+
+      const updateDate = vietnamDate(merged?.schedule?.update_slot);
+      const nextDate = vietnamDate(merged?.schedule?.next_update);
+      if (updateDate) state.weatherLastSlotMs = updateDate.getTime();
+      if (nextDate) state.weatherNextUpdateMs = nextDate.getTime();
+      updateWeatherClock();
+
+      el.weatherEmpty.hidden = true;
+      el.weatherContent.hidden = false;
+      renderWeatherCardsFromState();
+
+      const checked = formatVietnamTime(payload?.schedule?.checked_at);
+      const requested = Array.isArray(payload?.requested_targets) ? payload.requested_targets : [];
+      const targetText = requested.length === 2
+        ? 'hai vị trí'
+        : requested[0] === 'school' ? 'trường đã chọn' : 'vị trí học sinh';
+
+      const providerEvents = Array.isArray(payload?.provider_events) ? payload.provider_events : [];
+      const usesStale = Boolean(payload?.student?.weather?.stale || payload?.school?.weather?.stale);
+            if (payload.partial) {
+        setWeatherStatus('error', `Đã kiểm tra ${targetText} lúc ${checked}, nhưng có dữ liệu chưa tải được.`, '⚠️');
+      } else if (usesStale) {
+        setWeatherStatus('loading', `Open-Meteo đang bận; dữ liệu ${targetText} hiển thị là dữ liệu cũ, không phải quan trắc thời điểm hiện tại.`, '🕘');
+      } else {
+        setWeatherStatus('success', `Đã cập nhật ${targetText} lúc ${checked}. Mốc gần nhất ${formatVietnamTime(updateDate)}; mốc tiếp theo ${formatVietnamTime(nextDate)}.`, '✅');
+      }
+      const eventText = providerEvents.length ? ` ${providerEvents.join(' ')}` : '';
+      el.weatherSourceNote.innerHTML = `<strong>Nguồn:</strong> ${escapeHtml(merged?.provider?.name || 'Nguồn thời tiết')}. ${escapeHtml(merged?.provider?.note || '')}${escapeHtml(eventText)}`;
+      renderSafetyGuidance();
+    }
+
+
+    function weatherRisk(location, label) {
+      const weather = location?.weather;
+      const current = weather?.current || {};
+      if (!weather) return [];
+      const risks = [];
+      const temp = metricNumber(current.temperature_c);
+      const feels = metricNumber(current.apparent_temperature_c);
+      const humidity = metricNumber(current.humidity_percent);
+      const rainProb = metricNumber(current.precipitation_probability_percent);
+      const precip = metricNumber(current.precipitation_mm);
+      const wind = metricNumber(current.wind_speed_kmh);
+      const condition = String(current.condition || '').toLowerCase();
+
+      if (/dông|mưa đá/.test(condition) || (Number.isFinite(precip) && precip >= 7.5))
+        risks.push({level:3, type:'rain', text:`${label}: có dấu hiệu dông/mưa lớn; cần thận trọng khi di chuyển.`});
+      else if (/mưa to|mưa rào mạnh/.test(condition) || (Number.isFinite(precip) && precip >= 2.5) || (Number.isFinite(rainProb) && rainProb >= 70))
+        risks.push({level:2, type:'rain', text:`${label}: khả năng mưa cao${Number.isFinite(rainProb) ? ` (${Math.round(rainProb)}%)` : ''}.`});
+      else if (/mưa|phùn/.test(condition) || (Number.isFinite(precip) && precip > 0) || (Number.isFinite(rainProb) && rainProb >= 40))
+        risks.push({level:1, type:'rain', text:`${label}: có khả năng xuất hiện mưa${Number.isFinite(rainProb) ? ` (${Math.round(rainProb)}%)` : ''}.`});
+
+      if (/sương mù/.test(condition))
+        risks.push({level:2, type:'visibility', text:`${label}: có sương mù, tầm nhìn có thể giảm.`});
+
+      if ((Number.isFinite(feels) && feels >= 40) || (Number.isFinite(temp) && temp >= 37))
+        risks.push({level:3, type:'heat', text:`${label}: nhiệt độ/cảm giác nóng ở mức rất cao.`});
+      else if ((Number.isFinite(feels) && feels >= 37) || (Number.isFinite(temp) && temp >= 35))
+        risks.push({level:2, type:'heat', text:`${label}: thời tiết nóng; cần chú ý mất nước.`});
+      else if ((Number.isFinite(feels) && feels <= 18) || (Number.isFinite(temp) && temp <= 18))
+        risks.push({level:1, type:'cold', text:`${label}: thời tiết khá mát/lạnh.`});
+
+      if (Number.isFinite(humidity) && humidity >= 90 && Number.isFinite(feels) && feels >= 30)
+        risks.push({level:1, type:'humidity', text:`${label}: độ ẩm rất cao (${Math.round(humidity)}%), có thể gây cảm giác oi ẩm.`});
+
+      if (Number.isFinite(wind) && wind >= 50)
+        risks.push({level:3, type:'wind', text:`${label}: gió mạnh khoảng ${Math.round(wind)} km/h.`});
+      else if (Number.isFinite(wind) && wind >= 35)
+        risks.push({level:2, type:'wind', text:`${label}: gió khá mạnh khoảng ${Math.round(wind)} km/h.`});
+
+      if (weather.stale)
+        risks.push({level:1, type:'stale', text:`${label}: dữ liệu Open-Meteo đang cũ; cần kiểm tra lại trước khi đi.`});
+      return risks;
+    }
+
+    function weatherBrief(location, label) {
+      const weather = location?.weather;
+      const current = weather?.current || {};
+      if (!weather) return null;
+
+      const condition = String(current.condition || 'Chưa xác định');
+      const icon = String(current.icon || '🌦️');
+      const temp = metricNumber(current.temperature_c);
+      const feels = metricNumber(current.apparent_temperature_c);
+      const humidity = metricNumber(current.humidity_percent);
+      const rainProb = metricNumber(current.precipitation_probability_percent);
+      const precip = metricNumber(current.precipitation_mm);
+      const wind = metricNumber(current.wind_speed_kmh);
+
+      const metrics = [];
+      if (Number.isFinite(temp)) metrics.push(`${temp.toLocaleString('vi-VN', {maximumFractionDigits:1})}°C`);
+      if (Number.isFinite(feels)) metrics.push(`cảm giác ${feels.toLocaleString('vi-VN', {maximumFractionDigits:1})}°C`);
+      if (Number.isFinite(humidity)) metrics.push(`độ ẩm ${Math.round(humidity)}%`);
+      if (Number.isFinite(rainProb)) metrics.push(`mưa ${Math.round(rainProb)}%`);
+      if (Number.isFinite(precip) && precip > 0) metrics.push(`${precip.toLocaleString('vi-VN', {maximumFractionDigits:1})} mm`);
+      if (Number.isFinite(wind)) metrics.push(`gió ${wind.toLocaleString('vi-VN', {maximumFractionDigits:1})} km/h`);
+
+      return {
+        label,
+        condition,
+        icon,
+        metrics,
+        temp,
+        feels,
+        humidity,
+        rainProb,
+        precip,
+        wind,
+        stale: Boolean(weather.stale)
+      };
+    }
+
+    function currentWeatherAdvice(briefs, risks) {
+      const advice = [];
+      const conditions = briefs.map(b => String(b?.condition || '').toLowerCase()).filter(Boolean);
+      const has = pattern => conditions.some(c => pattern.test(c));
+      const maxFeels = Math.max(...briefs.map(b => Number.isFinite(b?.feels) ? b.feels : -Infinity));
+      const maxTemp = Math.max(...briefs.map(b => Number.isFinite(b?.temp) ? b.temp : -Infinity));
+      const maxHumidity = Math.max(...briefs.map(b => Number.isFinite(b?.humidity) ? b.humidity : -Infinity));
+      const maxRainProb = Math.max(...briefs.map(b => Number.isFinite(b?.rainProb) ? b.rainProb : -Infinity));
+      const maxPrecip = Math.max(...briefs.map(b => Number.isFinite(b?.precip) ? b.precip : -Infinity));
+      const maxWind = Math.max(...briefs.map(b => Number.isFinite(b?.wind) ? b.wind : -Infinity));
+
+      const rainRisk = risks.some(r => r.type === 'rain') || has(/mưa|phùn|dông/);
+      const stormRisk = risks.some(r => r.level >= 3 && r.type === 'rain') || has(/dông|mưa đá/);
+      const fogRisk = risks.some(r => r.type === 'visibility') || has(/sương mù/);
+      const heatRisk = risks.some(r => r.type === 'heat') || maxFeels >= 37 || maxTemp >= 35;
+      const coldRisk = risks.some(r => r.type === 'cold') || maxFeels <= 18 || maxTemp <= 18;
+      const windRisk = risks.some(r => r.type === 'wind') || maxWind >= 35;
+
+      if (stormRisk) {
+        advice.push('Có dấu hiệu dông hoặc mưa lớn: ưu tiên an toàn, tránh nơi trống trải, cây lớn và khu vực có nguy cơ ngập; nếu điều kiện thực tế xấu, nên chờ thời tiết giảm trước khi di chuyển.');
+      } else if (rainRisk) {
+        advice.push('Chuẩn bị áo mưa; đi chậm, giữ khoảng cách và chú ý mặt đường trơn hoặc điểm đọng nước.');
+      } else if (Number.isFinite(maxRainProb) && maxRainProb >= 25) {
+        advice.push(`Chưa có mưa đáng kể nhưng xác suất mưa cao nhất khoảng ${Math.round(maxRainProb)}%; nên mang áo mưa gọn nếu phải đi xa.`);
+      }
+
+      if (!rainRisk && has(/trời quang|ít mây|mây rải rác/)) {
+        advice.push(heatRisk
+          ? 'Trời khá quang/nắng; nên che nắng và mang theo nước uống.'
+          : 'Trời quang hoặc ít mây, điều kiện nhìn chung thuận lợi cho việc di chuyển.');
+      } else if (!rainRisk && has(/nhiều mây/)) {
+        advice.push('Trời nhiều mây; có thể di chuyển bình thường nhưng nên theo dõi khả năng mưa trước khi xuất phát.');
+      }
+
+      if (heatRisk) advice.push('Mang nước uống, che nắng và hạn chế đứng lâu ngoài trời trước khi vào học.');
+      else if (Number.isFinite(maxFeels) && maxFeels >= 32) advice.push('Cảm giác ngoài trời khá nóng; nên mang nước và tránh phơi nắng lâu.');
+
+      if (coldRisk) advice.push('Thời tiết khá mát/lạnh; nên mặc thêm áo phù hợp khi di chuyển.');
+      if (Number.isFinite(maxHumidity) && maxHumidity >= 90 && !heatRisk) advice.push('Độ ẩm cao, không khí có thể oi ẩm; nên mang nước và giữ cơ thể thoải mái khi di chuyển.');
+      if (windRisk) advice.push('Gió mạnh: đi chậm, giữ chắc đồ dùng và tránh đi sát cây lớn, biển quảng cáo hoặc vật dễ rơi.');
+      else if (Number.isFinite(maxWind) && maxWind >= 20) advice.push('Có gió vừa; khi đi xe máy hoặc xe đạp nên giữ tay lái ổn định.');
+      if (fogRisk) advice.push('Tầm nhìn có thể giảm do sương mù; nên đi chậm, bật đèn và tăng khoảng cách an toàn.');
+
+      if (!advice.length) advice.push('Điều kiện thời tiết hiện tại tương đối thuận lợi; có thể di chuyển theo kế hoạch bình thường.');
+      return advice;
+    }
+
+    function renderSafetyGuidance() {
+      if (!el.warningContent || !el.adviceContent) return;
+      const data = state.weatherData || {};
+      const originLabel = weatherDeparture()?.kind === 'home' ? 'Tại Nhà riêng đã lưu' : 'Nơi học sinh';
+      const studentBrief = weatherBrief(data.student, originLabel);
+      const schoolBrief = weatherBrief(data.school, 'Tại trường');
+      const briefs = [studentBrief, schoolBrief].filter(Boolean);
+      const risks = [
+        ...weatherRisk(data.student, originLabel),
+        ...weatherRisk(data.school, 'Tại trường')
+      ];
+      const hasWeather = briefs.length > 0;
+
+      if (!hasWeather) {
+        el.warningContent.className = 'safety-empty';
+        el.warningContent.textContent = 'Chưa có dữ liệu thời tiết để đánh giá. Hãy chọn trường hoặc định vị học sinh.';
+        el.adviceContent.className = 'safety-empty';
+        el.adviceContent.textContent = 'Lời khuyên sẽ xuất hiện khi hệ thống nhận được dữ liệu thời tiết.';
+        return;
+      }
+
+      const briefHtml = briefs.map(b => {
+        const metricText = b.metrics.length ? b.metrics.join(' · ') : 'Chưa đủ chỉ số chi tiết';
+        const staleText = b.stale ? ' · dữ liệu gần nhất' : '';
+        return `<div class="weather-brief-item"><strong>${escapeHtml(b.icon)} ${escapeHtml(b.label)}: ${escapeHtml(b.condition)}</strong><div class="brief-metrics">${escapeHtml(metricText + staleText)}</div></div>`;
+      }).join('');
+
+      const maxLevel = risks.reduce((m, r) => Math.max(m, r.level), 0);
+      state.safetyLevel = maxLevel >= 3 ? 'danger' : maxLevel >= 1 ? 'watch' : 'good';
+      const headline = maxLevel >= 3 ? 'Có điều kiện thời tiết cần đặc biệt thận trọng' :
+        maxLevel >= 2 ? 'Có điều kiện thời tiết cần lưu ý' :
+        maxLevel === 1 ? 'Theo dõi thời tiết khi di chuyển' : 'Thời tiết hiện tại chưa có cảnh báo đáng kể';
+      const statusIcon = maxLevel >= 3 ? '🔴' : maxLevel >= 1 ? '🟡' : '🟢';
+      const riskItems = risks.length
+        ? `<ul class="safety-list">${risks.map(r => `<li>${escapeHtml(r.text)}</li>`).join('')}</ul>`
+        : '<ul class="safety-list"><li>Chưa có chỉ số nào vượt ngưỡng cảnh báo của ứng dụng.</li></ul>';
+
+      el.warningContent.className = '';
+      el.warningContent.innerHTML = `<div class="weather-brief-list">${briefHtml}</div><div class="safety-summary ${state.safetyLevel}">${statusIcon} ${escapeHtml(headline)}</div>${riskItems}`;
+
+      const advice = currentWeatherAdvice(briefs, risks);
+
+      if (studentBrief && schoolBrief) {
+        const studentCond = studentBrief.condition.toLowerCase();
+        const schoolCond = schoolBrief.condition.toLowerCase();
+        const rainGap = Number.isFinite(studentBrief.rainProb) && Number.isFinite(schoolBrief.rainProb)
+          ? Math.abs(studentBrief.rainProb - schoolBrief.rainProb) : 0;
+        const tempGap = Number.isFinite(studentBrief.temp) && Number.isFinite(schoolBrief.temp)
+          ? Math.abs(studentBrief.temp - schoolBrief.temp) : 0;
+        if (studentCond !== schoolCond || rainGap >= 25 || tempGap >= 3) {
+          advice.push('Thời tiết tại điểm xuất phát và trường có khác biệt; nên kiểm tra lại tình hình ngay trước lúc đi.');
+        }
+      }
+
+      if (state.routeData?.duration_minutes) {
+        const mins = Number(state.routeData.duration_minutes);
+        const km = Number(state.routeData.distance_km);
+        const routeText = `Tuyến hiện tại khoảng ${Number.isFinite(km) ? km.toLocaleString('vi-VN') + ' km, ' : ''}${Math.round(mins)} phút.`;
+        if (maxLevel >= 2 || risks.some(r => ['rain','wind','visibility'].includes(r.type)))
+          advice.push(`${routeText} Nên chừa thêm thời gian vì điều kiện thời tiết có thể làm tốc độ di chuyển giảm.`);
+        else if (Number.isFinite(mins) && mins >= 20)
+          advice.push(`${routeText} Nên chủ động thời gian xuất phát để không bị trễ.`);
+        else
+          advice.push(`${routeText} Có thể di chuyển theo thời gian dự kiến nếu điều kiện thực tế không thay đổi.`);
+      } else if (weatherDeparture() && selectedSchool()) {
+        advice.push('Đang chờ dữ liệu tuyến đường để bổ sung quãng đường và thời gian di chuyển vào lời khuyên.');
+      }
+
+      if (maxLevel >= 3) advice.push('Nếu điều kiện thực tế nguy hiểm, ưu tiên an toàn và theo dõi thông báo chính thức của nhà trường hoặc cơ quan chức năng.');
+
+      el.adviceContent.className = '';
+      el.adviceContent.innerHTML = `<div class="safety-summary ${state.safetyLevel}">🎒 Gợi ý theo thời tiết và hành trình</div><ul class="safety-list">${advice.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>`;
+    }
+
+
+    async function refreshWeatherIfReady(reason = 'manual') {
+      const school = selectedSchool();
+      const student = weatherDeparture();
+      const hasStudent = Boolean(student);
+      const hasSchool = Boolean(school);
+      if (!updateWeatherReadiness()) return;
+
+      let includeStudent = hasStudent;
+      let includeSchool = hasSchool;
+
+      // School selection must also request saved-home weather, so that only
+      // selecting a school is enough for both weather cards and a route.
+      if (reason === 'school') includeStudent = student?.kind === 'home';
+      if (reason === 'gps-first' || reason === 'gps') {
+        includeSchool = false;
+        includeStudent = student?.kind === 'gps';
+      }
+
+      const currentWindow = currentFiveMinuteWindow();
+      const slotMs = currentWindow.update.getTime();
+      let studentKey = null;
+      let schoolKey = null;
+
+      if (includeStudent) {
+        studentKey = `${student.kind}|${Number(student.lat).toFixed(5)}|${Number(student.lon).toFixed(5)}|${slotMs}`;
+        const alreadyCurrent = state.weatherLastCompletedStudentKey === studentKey && state.weatherData?.student?.weather;
+        const alreadyLoading = [...state.weatherPendingRequests.keys()].some(key => key.includes(`student:${studentKey}`));
+        if ((alreadyCurrent || alreadyLoading) && !['scheduled', 'resume'].includes(reason)) includeStudent = false;
+      }
+
+      if (includeSchool) {
+        schoolKey = `${school.id}|${slotMs}`;
+        const alreadyCurrent = state.weatherLastCompletedSchoolKey === schoolKey && state.weatherData?.school?.weather;
+        if (alreadyCurrent && !['scheduled', 'resume'].includes(reason)) includeSchool = false;
+      }
+
+      if (!includeStudent && !includeSchool) return;
+
+      const requestParts = [];
+      if (includeStudent) requestParts.push(`student:${studentKey}`);
+      if (includeSchool) requestParts.push(`school:${schoolKey}`);
+      const requestKey = requestParts.join('|');
+      if (state.weatherPendingRequests.has(requestKey)) return;
+
+      const controller = new AbortController();
+      state.weatherPendingRequests.set(requestKey, controller);
+      const studentSerial = includeStudent ? ++state.weatherStudentSerial : null;
+      const schoolSerial = includeSchool ? ++state.weatherSchoolSerial : null;
+
+      renderWeatherCardsFromState();
+      const targetText = includeStudent && includeSchool
+        ? (student?.kind === 'home' ? 'Nhà riêng đã lưu và trường' : 'vị trí học sinh và trường')
+        : includeSchool ? 'trường vừa chọn' : (student?.kind === 'home' ? 'Nhà riêng đã lưu' : 'vị trí học sinh');
+      setWeatherStatus('loading', `Đang lấy thời tiết tại ${targetText}${reason === 'scheduled' ? ' ở mốc 5 phút mới' : ''}…`, '⏳');
+
+      const params = new URLSearchParams();
+      if (includeStudent) {
+        params.set('user_lat', String(student.lat));
+        params.set('user_lon', String(student.lon));
+      }
+      if (includeSchool) params.set('school_id', school.id);
+
+      let weatherTimedOut = false;
+      const weatherTimeoutId = window.setTimeout(() => {
+        weatherTimedOut = true;
+        controller.abort();
+      }, 12000);
+
+      try {
+        const payload = await fetchJson(`/api/weather-info?${params.toString()}`, {
+          signal: controller.signal,
+          cache: 'no-store'
+        });
+
+        if (payload.student && studentSerial !== state.weatherStudentSerial) payload.student = null;
+        if (payload.school && schoolSerial !== state.weatherSchoolSerial) payload.school = null;
+        if (!payload.student && !payload.school) return;
+
+        if (payload.student && studentKey) state.weatherLastCompletedStudentKey = studentKey;
+        if (payload.school && schoolKey) state.weatherLastCompletedSchoolKey = schoolKey;
+        renderWeather(payload);
+      } catch (error) {
+        if (error?.name === 'AbortError' && !weatherTimedOut) return;
+        if (weatherTimedOut) error = new Error('Nguồn thời tiết phản hồi quá chậm. Hãy bấm “Thử lại”.');
+        console.error('Weather error:', error);
+
+        const currentData = state.weatherData || {};
+        // Một thẻ cũ chỉ còn tham khảo tối đa 15 phút khi API Open-Meteo lỗi.
+        // Dữ liệu cũ hơn bị thay bằng thông báo lỗi, không hiển thị như hiện tại.
+        const markOldWeather = location => {
+          const weather = location?.weather;
+          if (!weather) return;
+          const fetchedAt = vietnamDate(weather.fetched_at);
+          const elapsed = fetchedAt ? (Date.now() - fetchedAt.getTime()) / 60000 : Infinity;
+          if (!Number.isFinite(elapsed) || elapsed < 0 || elapsed > 15) {
+            location.weather = null;
+            location.error = 'Dữ liệu Open-Meteo đã cũ và nguồn hiện không phản hồi. Vui lòng thử lại.';
+            return;
+          }
+          weather.stale = true;
+          weather.stale_age_minutes = Math.max(1, Math.round(elapsed));
+          weather.stale_reason = 'Open-Meteo đang không phản hồi; dữ liệu này đã cũ.';
+        };
+        if (includeStudent && studentSerial === state.weatherStudentSerial) markOldWeather(currentData.student);
+        if (includeSchool && schoolSerial === state.weatherSchoolSerial) markOldWeather(currentData.school);
+        if (includeStudent && studentSerial === state.weatherStudentSerial && !currentData.student?.weather) {
+          currentData.student = {
+            name: student?.name || 'Vị trí học sinh',
+            description: student?.description || '',
+            error: `Không lấy được thời tiết: ${error.message}`
+          };
+        }
+        if (includeSchool && schoolSerial === state.weatherSchoolSerial && !currentData.school?.weather) {
+          currentData.school = {
+            id: school?.id,
+            name: school?.short_name || school?.name || 'Trường học',
+            address: school?.address || '',
+            error: `Không lấy được thời tiết: ${error.message}`
+          };
+        }
+        state.weatherData = currentData;
+        el.weatherEmpty.hidden = true;
+        el.weatherContent.hidden = false;
+        renderWeatherCardsFromState();
+        setWeatherStatus('error', `Không cập nhật được thời tiết tại ${targetText}. ${error.message}`, '⚠️');
+      } finally {
+        window.clearTimeout(weatherTimeoutId);
+        // An aborted older request must not remove a replacement request.
+        if (state.weatherPendingRequests.get(requestKey) === controller) {
+          state.weatherPendingRequests.delete(requestKey);
+        }
+      }
+    }
+
+
+    function checkWeatherAfterResume() {
+      const currentWindow = currentFiveMinuteWindow();
+      const slotChanged = !Number.isFinite(state.weatherLastSlotMs) || currentWindow.update.getTime() > state.weatherLastSlotMs;
+      state.weatherNextUpdateMs = currentWindow.next.getTime();
+      updateWeatherClock();
+      if (slotChanged) refreshWeatherIfReady('resume');
+      scheduleWeatherBoundary();
+    }
+
+    function arcgisGeoJsonUrl(layerId, where, outFields) {
+      const params = new URLSearchParams({
+        where,
+        outFields,
+        returnGeometry: 'true',
+        f: 'geojson',
+        outSR: '4326'
+      });
+      return `${ARCGIS_GADM_BASE}/${layerId}/query?${params.toString()}`;
+    }
+
+    function geometryExteriorRings(geometry) {
+      if (!geometry) return [];
+      if (geometry.type === 'Polygon') {
+        return geometry.coordinates.length ? [geometry.coordinates[0]] : [];
+      }
+      if (geometry.type === 'MultiPolygon') {
+        return geometry.coordinates
+          .filter(poly => Array.isArray(poly) && poly.length)
+          .map(poly => poly[0]);
+      }
+      return [];
+    }
+
+    function buildOutsideMask(provinceGeoJson) {
+      if (state.maskLayer) map.removeLayer(state.maskLayer);
+
+      const holes = [];
+      for (const feature of provinceGeoJson.features || []) {
+        for (const ring of geometryExteriorRings(feature.geometry)) {
+          holes.push(ring.map(([lng, lat]) => [lat, lng]));
+        }
+      }
+
+      if (!holes.length) return;
+
+      const world = [
+        [89.9, -179.9],
+        [89.9, 179.9],
+        [-89.9, 179.9],
+        [-89.9, -179.9]
+      ];
+
+      state.maskLayer = L.polygon([world, ...holes], {
+        stroke: false,
+        fillColor: '#edf3f8',
+        fillOpacity: 0.985,
+        fillRule: 'evenodd',
+        interactive: false
+      }).addTo(map);
+
+      state.maskLayer.bringToFront();
+    }
+
+    function districtLabel(name, bounds) {
+      return L.marker(bounds.getCenter(), {
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({
+          className: '',
+          html: `<span class="district-label">${escapeHtml(name)}</span>`,
+          iconSize: null
+        })
+      });
+    }
+
+    async function loadBoundary() {
+      const provinceUrl = arcgisGeoJsonUrl(1, "NAME_1='Bình Dương'", 'NAME_1,GID_1');
+      const districtsUrl = arcgisGeoJsonUrl(2, "NAME_1='Bình Dương'", 'NAME_1,NAME_2,GID_2,TYPE_2');
+
+      try {
+        const [provinceData, districtData] = await Promise.all([
+          fetchJson(provinceUrl),
+          fetchJson(districtsUrl)
+        ]);
+
+        if (!provinceData.features?.length) throw new Error('Không nhận được ranh giới tỉnh Bình Dương');
+
+        if (state.provinceLayer) map.removeLayer(state.provinceLayer);
+        if (state.districtGroup) map.removeLayer(state.districtGroup);
+        if (state.districtLabelGroup) map.removeLayer(state.districtLabelGroup);
+
+        buildOutsideMask(provinceData);
+
+        state.provinceLayer = L.geoJSON(provinceData, {
+          style: {
+            color: '#0a67c7',
+            weight: 3,
+            opacity: 1,
+            fillColor: '#ffffff',
+            fillOpacity: 0.01
+          },
+          interactive: false
+        }).addTo(map);
+        state.provinceLayer.bringToFront();
+
+        state.districtBoundsByName.clear();
+        state.districtGroup = L.geoJSON(districtData, {
+          style: {
+            color: '#5d8eb9',
+            weight: 1.2,
+            opacity: 0.85,
+            dashArray: '5 4',
+            fillColor: '#7db5e8',
+            fillOpacity: 0.035
+          },
+          onEachFeature(feature, layer) {
+            const name = feature?.properties?.NAME_2 || '';
+            if (name) state.districtBoundsByName.set(normalizeText(name), layer.getBounds());
+          },
+          interactive: false
+        }).addTo(map);
+        state.districtGroup.bringToFront();
+
+        state.districtLabelGroup = L.layerGroup().addTo(map);
+        for (const featureLayer of state.districtGroup.getLayers()) {
+          const name = featureLayer.feature?.properties?.NAME_2;
+          if (!name) continue;
+          districtLabel(name, featureLayer.getBounds()).addTo(state.districtLabelGroup);
+        }
+
+        state.provinceBounds = state.provinceLayer.getBounds();
+        state.boundaryLoaded = true;
+
+        map.setMaxBounds(state.provinceBounds.pad(0.06));
+        fitProvince();
+
+        const fitZoom = map.getBoundsZoom(state.provinceBounds, false, [34, 34]);
+        map.setMinZoom(Math.max(8, fitZoom - 1));
+
+        // Đưa marker trường và vị trí học sinh lên trên lớp ranh giới/mặt nạ.
+        renderMarkers();
+        bringStudentLocationToFront();
+      } catch (error) {
+        console.error('Boundary error:', error);
+        state.boundaryLoaded = false;
+        map.setMaxBounds(L.latLngBounds([[10.72, 106.28], [11.57, 107.05]]));
+        map.fitBounds([[10.72, 106.28], [11.57, 107.05]], { padding: [30, 30] });
+        showToast('Chưa tải được ranh giới Bình Dương; kiểm tra Internet rồi bấm Tải lại.');
+      }
+    }
+
+    function fitProvince() {
+      if (state.provinceBounds?.isValid()) {
+        map.fitBounds(state.provinceBounds, { padding: [34, 34], maxZoom: 11 });
+      } else {
+        map.fitBounds([[10.72, 106.28], [11.57, 107.05]], { padding: [34, 34], maxZoom: 11 });
+      }
+      state.selectedId = null;
+      state.weatherSchoolSerial += 1;
+      if (state.weatherData) state.weatherData = { ...state.weatherData, school: null };
+      updateSelectedMarkerIcons();
+      renderSchoolList();
+      el.mapTitle.textContent = 'Bản đồ riêng Bình Dương trước sáp nhập 2025';
+      el.mapSubtitle.textContent = 'Ranh giới tỉnh và 9 khu vực cấp huyện trước sáp nhập 2025.';
+      updateWeatherReadiness();
+    }
+
+    function viewProvinceOnly() {
+      if (state.provinceBounds?.isValid()) {
+        map.fitBounds(state.provinceBounds, { padding: [34, 34], maxZoom: 11 });
+      } else {
+        map.fitBounds([[10.72, 106.28], [11.57, 107.05]], { padding: [34, 34], maxZoom: 11 });
+      }
+      bringStudentLocationToFront();
+    }
+
+    function schoolMarkerIcon(schoolId) {
+      const selected = schoolId === state.selectedId;
+      return L.divIcon({
+        className: '',
+        html: `<div class="school-dot${selected ? ' selected' : ''}" title="Trường học">🏫</div>`,
+        iconSize: selected ? [28, 28] : [22, 22],
+        iconAnchor: selected ? [14, 14] : [11, 11],
+        popupAnchor: [0, -13]
+      });
+    }
+
+    function renderMarkers() {
+      markerGroup.clearLayers();
+      state.markers.clear();
+
+      for (const school of state.visibleSchools) {
+        // An toàn dữ liệu: marker chưa được đối chiếu sẽ không được vẽ lên bản đồ.
+        const quality = String(school.coordinate_quality || '');
+        if (quality === 'estimated_from_address' || quality.startsWith('unverified')) continue;
+
+        const lat = Number(school.lat);
+        const lon = Number(school.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+
+        const marker = L.marker([lat, lon], {
+          icon: schoolMarkerIcon(school.id),
+          title: school.short_name || school.name,
+          riseOnHover: true
+        }).addTo(markerGroup);
+
+        marker.on('click', () => selectSchool(school.id, { fly: false, openPopup: false }));
+        state.markers.set(school.id, marker);
+      }
+    }
+
+    function updateSelectedMarkerIcons() {
+      for (const [id, marker] of state.markers) {
+        marker.setIcon(schoolMarkerIcon(id));
+      }
+    }
+
+    function qualityTag(school) {
+      const quality = String(school.coordinate_quality || '');
+      if (quality === 'estimated_from_address' || quality.startsWith('unverified')) {
+        return '<span class="tag warn">! Chưa xác minh</span>';
+      }
+      return '<span class="tag ok">✓ Đã đối chiếu</span>';
+    }
+
+    function renderSchoolList() {
+      const selected = state.selectedId ? state.schoolById.get(state.selectedId) : null;
+
+      if (selected) {
+        el.totalCount.textContent = '1 trường';
+        el.schoolList.classList.add('school-list-selected');
+        el.schoolList.innerHTML = `
+          <button class="school-back" id="chooseAnotherSchoolButton" type="button">← Chọn trường khác</button>
+          <button class="school-card active" type="button" data-school-id="${escapeHtml(selected.id)}">
+            <p class="school-name">${escapeHtml(selected.name)}</p>
+            <p class="school-address">${escapeHtml(selected.address)}</p>
+            <div class="school-meta">
+              <span class="tag">${escapeHtml(selected.district_name)}</span>
+              ${qualityTag(selected)}
+            </div>
+          </button>
+        `;
+
+        const backButton = document.getElementById('chooseAnotherSchoolButton');
+        if (backButton) backButton.addEventListener('click', clearSchoolSelection);
+        return;
+      }
+
+      el.schoolList.classList.remove('school-list-selected');
+      el.totalCount.textContent = `${state.visibleSchools.length || state.allSchools.length || 0} trường`;
+      el.visibleCount.textContent = `Hiển thị ${state.visibleSchools.length} trường`;
+
+      if (!state.visibleSchools.length) {
+        el.schoolList.innerHTML = '<div class="empty">Không có trường trong khu vực này.</div>';
+        return;
+      }
+
+      el.schoolList.innerHTML = state.visibleSchools.map(school => `
+        <button class="school-card" type="button" data-school-id="${escapeHtml(school.id)}">
+          <p class="school-name">${escapeHtml(school.name)}</p>
+          <p class="school-address">${escapeHtml(school.address)}</p>
+          <div class="school-meta">
+            <span class="tag">${escapeHtml(school.district_name)}</span>
+            ${qualityTag(school)}
+          </div>
+        </button>
+      `).join('');
+
+      for (const card of el.schoolList.querySelectorAll('[data-school-id]')) {
+        card.addEventListener('click', () => selectSchool(card.dataset.schoolId));
+      }
+    }
+
+    function clearSchoolSelection() {
+      state.selectedId = null;
+      state.weatherSchoolSerial += 1;
+      if (state.weatherData) state.weatherData = { ...state.weatherData, school: null };
+
+      updateSelectedMarkerIcons();
+      renderSchoolList();
+
+      const districtId = el.districtSelect.value;
+      if (districtId) {
+        const targetName = DISTRICT_NAME_BY_ID[districtId] || 'Khu vực đã chọn';
+        el.mapTitle.textContent = targetName;
+        el.mapSubtitle.textContent = 'Chọn một trường trong danh sách để xem chi tiết.';
+      } else {
+        el.mapTitle.textContent = 'Bản đồ riêng Bình Dương trước sáp nhập 2025';
+        el.mapSubtitle.textContent = 'Chọn một trường trong danh sách để xem chi tiết.';
+      }
+
+      resetRoute(schoolSelectionHint());
+      updateWeatherReadiness();
+    }
+
+    function selectSchool(schoolId, options = {}) {
+      const school = state.schoolById.get(schoolId);
+      if (!school) return;
+
+      const schoolChanged = state.selectedId !== schoolId;
+      state.selectedId = schoolId;
+      if (schoolChanged) {
+        // Ignore weather responses for the previous school if a user switches quickly.
+        state.weatherSchoolSerial += 1;
+        state.weatherLastCompletedSchoolKey = null;
+        resetRoute('Đang chuẩn bị hành trình cho trường vừa chọn…');
+      }
+      renderSchoolList();
+      updateSelectedMarkerIcons();
+      updateJourneySummary();
+
+      const marker = state.markers.get(schoolId);
+      if (marker) {
+        if (options.fly !== false) map.flyTo(marker.getLatLng(), 14, { duration: .55 });
+      }
+
+      el.mapTitle.textContent = school.short_name || school.name;
+      el.mapSubtitle.textContent = school.address || `${school.ward_name} · ${school.district_name}`;
+      if (state.weatherData) state.weatherData = { ...state.weatherData, school: null };
+      updateWeatherReadiness();
+      refreshWeatherIfReady('school');
+      refreshRoute();
+    }
+
+    async function loadDistricts() {
+      const payload = await fetchJson('/api/districts');
+      const selected = el.districtSelect.value;
+      const options = ['<option value="">Tất cả khu vực</option>'];
+      for (const district of payload.districts || []) {
+        options.push(`<option value="${escapeHtml(district.id)}">${escapeHtml(district.name)} (${district.school_count})</option>`);
+      }
+      el.districtSelect.innerHTML = options.join('');
+      el.districtSelect.value = selected;
+    }
+
+    async function loadSchools() {
+      el.schoolList.innerHTML = '<div class="loading">Đang tải danh sách trường…</div>';
+
+      const district = el.districtSelect.value;
+      const url = district ? `/api/schools?district=${encodeURIComponent(district)}` : '/api/schools';
+      const payload = await fetchJson(url);
+
+      state.visibleSchools = payload.schools || [];
+      if (!district) {
+        state.allSchools = state.visibleSchools.slice();
+        state.schoolById = new Map(state.allSchools.map(school => [school.id, school]));
+      } else {
+        for (const school of state.visibleSchools) state.schoolById.set(school.id, school);
+      }
+
+      el.totalCount.textContent = `${payload.metadata?.total_schools ?? state.allSchools.length} trường`;
+      state.selectedId = null;
+      state.weatherSchoolSerial += 1;
+      if (state.weatherData) state.weatherData = { ...state.weatherData, school: null };
+      renderSchoolList();
+      renderMarkers();
+      updateWeatherReadiness();
+    }
+
+    function focusSelectedDistrict() {
+      const id = el.districtSelect.value;
+      if (!id) {
+        fitProvince();
+        return;
+      }
+
+      const targetName = DISTRICT_NAME_BY_ID[id];
+      const bounds = state.districtBoundsByName.get(normalizeText(targetName));
+      if (bounds?.isValid()) {
+        map.fitBounds(bounds, { padding: [35, 35], maxZoom: 12 });
+        el.mapTitle.textContent = targetName;
+        el.mapSubtitle.textContent = 'Khu vực được chọn trong phạm vi Bình Dương cũ.';
+      }
+    }
+
+    async function reloadAll() {
+      el.reloadButton.disabled = true;
+      try {
+        state.selectedId = null;
+        state.routeClientCache.clear();
+        state.weatherSchoolSerial += 1;
+        if (state.weatherData) state.weatherData = { ...state.weatherData, school: null };
+        resetRoute(schoolSelectionHint());
+
+        await Promise.all([loadDistricts(), loadSchools(), loadBoundary()]);
+
+        if (el.districtSelect.value) {
+          focusSelectedDistrict();
+        } else {
+          fitProvince();
+        }
+
+        updateSelectedMarkerIcons();
+        renderSchoolList();
+        updateWeatherReadiness();
+        showToast('Đã tải lại bản đồ và dữ liệu trường.');
+      } catch (error) {
+        console.error(error);
+        showToast('Không tải lại được dữ liệu.');
+      } finally {
+        el.reloadButton.disabled = false;
+      }
+    }
+
+    el.districtSelect.addEventListener('change', async () => {
+      try {
+        state.routeClientCache.clear();
+        resetRoute(schoolSelectionHint());
+        await loadSchools();
+        focusSelectedDistrict();
+      } catch (error) {
+        console.error(error);
+        el.schoolList.innerHTML = `<div class="error">Không tải được danh sách trường.<br>${escapeHtml(error.message)}</div>`;
+      }
+    });
+
+    el.locateStudentButton.addEventListener('click', locateStudent);
+    el.viewAllButton.addEventListener('click', viewProvinceOnly);
+    el.reloadButton.addEventListener('click', reloadAll);
+
+    window.addEventListener('resize', () => map.invalidateSize());
+    window.addEventListener('focus', checkWeatherAfterResume);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) checkWeatherAfterResume();
+    });
+    window.addEventListener('beforeunload', () => {
+      clearGpsWatch();
+      clearWeatherTimers();
+      for (const controller of state.weatherPendingRequests.values()) controller.abort();
+      state.weatherPendingRequests.clear();
+    });
+
+
+    (async function init() {
+      try {
+        loadSavedHome();
+        await loadDistricts();
+        await loadSchools();
+        await loadBoundary();
+        initWeatherSchedule();
+        updateWeatherReadiness();
+        // The saved home is persistent per browser. Weather can be fetched for
+        // it without requesting geolocation or waiting for school selection.
+        if (hasSavedHome()) refreshWeatherIfReady('init');
+        setTimeout(() => map.invalidateSize(), 180);
+      } catch (error) {
+        console.error(error);
+        el.schoolList.innerHTML = `
+          <div class="error">
+            Không kết nối được Flask API.<br>
+            Hãy chạy <strong>CHAY_UNG_DUNG.bat</strong>, không mở trực tiếp file HTML.
+          </div>
+        `;
+      }
+    })();
+  </script>
+</body>
+</html>
